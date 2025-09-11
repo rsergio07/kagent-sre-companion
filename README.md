@@ -8,13 +8,7 @@ Rather than replacing traditional SRE tools, Kagent enhances them by providing i
 
 ## Table of Contents
 
-1. [Quick Deployment](#quick-deployment)
-2. [Detailed Setup Guide](#detailed-setup-guide)
-3. [Configuration Files Overview](#configuration-files-overview)
-4. [Interactive Demo Scenarios](#interactive-demo-scenarios)
-5. [Why This Matters for SRE](#why-this-matters-for-sre)
-6. [Expected Outcomes](#expected-outcomes)
-7. [Troubleshooting](#troubleshooting)
+
 
 ## Quick Deployment
 
@@ -23,42 +17,24 @@ For immediate deployment, ensure you have the prerequisites and your Anthropic A
 ```bash
 # Prerequisites: kubectl, helm, minikube, docker
 export ANTHROPIC_API_KEY='your-api-key-here'
+```
 
-# Clone and deploy
-git clone <repository-url>
+```bash
+# Fork the repository - better comment here
+https://github.com/rsergio07/kagent-sre-companion
+```
+
+```bash
+# Nice comment here to navigate to the repo
 cd sre-companion-demo
+```
+
+```bash
+# nice comment here
 ./scripts/setup-sre-companion.sh
 ```
 
 This single script deploys the complete environment including Kubernetes infrastructure, AI integration, and autonomous controllers. The setup process takes approximately 10-15 minutes depending on your cluster resources and network connectivity.
-
-## Detailed Setup Guide
-
-### Prerequisites Validation
-
-Before deployment, verify that your environment meets the technical requirements:
-
-```bash
-# Check required tools
-kubectl version --client
-helm version
-minikube version
-docker version
-```
-
-Each tool serves a specific purpose in the deployment process. Kubectl manages Kubernetes resources, Helm handles package management for complex applications like Prometheus and Kagent, Minikube provides the local Kubernetes cluster, and Docker builds and manages container images.
-
-### Environment Preparation
-
-```bash
-# Set your Anthropic API key (required for AI integration)
-export ANTHROPIC_API_KEY='your-api-key-here'
-
-# Start Minikube with adequate resources
-minikube start --cpus=6 --memory=12288mb --disk-size=40g --driver=docker
-```
-
-The resource allocation ensures sufficient capacity for running the demo application, monitoring stack, and AI components simultaneously. This configuration supports realistic operational scenarios without resource contention.
 
 ### Core Infrastructure Deployment
 
@@ -188,10 +164,6 @@ These configurations enable conversational cluster operations where operators ca
 **Purpose**: Automates deployment processes and provides operational tools for reproducible demonstrations.
 
 - `setup-sre-companion.sh`: Complete environment deployment with validation
-- `setup-sre-companion-progressive.sh`: Phased deployment for educational purposes
-- `deploy-core.sh`: Kubernetes infrastructure only
-- `deploy-kagent.sh`: AI integration components only
-- `deploy-controllers.sh`: Autonomous controller deployment
 - `load-test.sh`: Controlled load generation for scaling demonstrations
 - `cleanup.sh`: Complete environment teardown
 

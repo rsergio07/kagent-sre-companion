@@ -19,56 +19,88 @@ validate_anthropic_key() {
     echo "[+] Anthropic API key validated"
 }
 
-check_existing_runtime() {
-    if minikube status >/dev/null 2>&1; then
-        echo "[!] Minikube already running, stopping first..."
-        minikube stop
+force_cleanup() {
+    echo "[+] Performing force cleanup of existing environments..."
+    
+    # Force delete Minikube cluster completely
+    echo "[+] Force deleting any existing Minikube clusters..."
+    minikube delete --all --purge 2>/dev/null || true
+    
+    # Clean up Docker contexts that might be pointing to Colima
+    echo "[+] Resetting Docker context..."
+    docker context use default 2>/dev/null || true
+    
+    # Stop Colima if running
+    if command -v colima >/dev/null 2>&1; then
+        echo "[+] Stopping Colima..."
+        colima stop 2>/dev/null || true
     fi
     
-    # Check if Colima is available and handle it properly
-    if command -v colima >/dev/null 2>&1; then
-        echo "[+] Configuring Colima for adequate resources..."
+    # Clean up any stale kubectl contexts
+    kubectl config unset current-context 2>/dev/null || true
+    kubectl config delete-context minikube 2>/dev/null || true
+    kubectl config delete-cluster minikube 2>/dev/null || true
+    
+    echo "[+] Force cleanup completed"
+}
+
+setup_docker_runtime() {
+    echo "[+] Setting up Docker runtime..."
+    
+    # Check if Docker Desktop is available and running
+    if docker info >/dev/null 2>&1; then
+        DOCKER_DRIVER=$(docker info --format '{{.ServerVersion}}' 2>/dev/null || echo "unknown")
+        echo "[+] Docker is already running (version: $DOCKER_DRIVER)"
+        return 0
+    fi
+    
+    # Try to start Docker Desktop
+    echo "[+] Attempting to start Docker Desktop..."
+    if [[ -d "/Applications/Docker.app" ]]; then
+        open -a Docker
+        echo "[+] Docker Desktop starting... waiting for it to be ready"
         
-        # Stop any existing Colima instance
-        if colima status >/dev/null 2>&1; then
-            echo "[!] Stopping existing Colima instance..."
-            colima stop
-        fi
-        
-        # Delete existing instance to avoid conflicts
-        echo "[+] Cleaning up existing Colima instance..."
-        colima delete --force >/dev/null 2>&1 || true
-        
-        # Start fresh with proper resources
-        echo "[+] Starting fresh Colima instance with proper resource allocation..."
-        if ! colima start --cpu 8 --memory 16 --disk 60 --vm-type vz; then
-            echo "[!] VZ driver failed, trying with qemu..."
-            colima start --cpu 8 --memory 16 --disk 60 --vm-type qemu
-        fi
-        
-        # Wait for Docker to be available
-        echo "[+] Waiting for Docker daemon to be ready..."
-        for i in {1..30}; do
+        # Wait for Docker to be ready (up to 2 minutes)
+        for i in {1..60}; do
             if docker info >/dev/null 2>&1; then
-                echo "[✓] Docker daemon is ready"
-                break
+                echo "[+] Docker Desktop is ready"
+                return 0
             fi
-            echo "    Waiting for Docker... ($i/30)"
+            echo "    Waiting for Docker Desktop... ($i/60)"
             sleep 2
         done
         
-        if ! docker info >/dev/null 2>&1; then
-            echo "ERROR: Docker daemon failed to start after 60 seconds"
-            exit 1
-        fi
-        
-        echo "[+] Colima configured successfully"
-    elif docker info >/dev/null 2>&1; then
-        echo "[+] Docker runtime detected (not Colima)"
-    else
-        echo "ERROR: No Docker runtime available. Please install Docker Desktop or Colima"
+        echo "ERROR: Docker Desktop failed to start within 2 minutes"
         exit 1
     fi
+    
+    # If Docker Desktop is not available, try Colima
+    if command -v colima >/dev/null 2>&1; then
+        echo "[+] Docker Desktop not found, trying Colima..."
+        colima delete --force 2>/dev/null || true
+        
+        echo "[+] Starting Colima with adequate resources..."
+        if ! colima start --cpu 8 --memory 16 --disk 60 --vm-type vz 2>/dev/null; then
+            echo "[!] VZ driver failed, trying QEMU..."
+            colima start --cpu 8 --memory 16 --disk 60 --vm-type qemu
+        fi
+        
+        # Wait for Docker to be available through Colima
+        for i in {1..30}; do
+            if docker info >/dev/null 2>&1; then
+                echo "[+] Colima Docker is ready"
+                return 0
+            fi
+            echo "    Waiting for Colima Docker... ($i/30)"
+            sleep 2
+        done
+        
+        echo "ERROR: Colima Docker failed to start"
+        exit 1
+    fi
+    
+    echo "ERROR: Neither Docker Desktop nor Colima is available"
+    exit 1
 }
 
 wait_for_deployment() {
@@ -77,34 +109,39 @@ wait_for_deployment() {
     if ! kubectl wait --for=condition=available --timeout=${timeout}s deployment/$name -n $namespace; then
         echo "ERROR: $name failed to become ready within ${timeout}s"
         echo "--- Pod Status ---"
-        kubectl -n $namespace get pods -l app.kubernetes.io/name=$name
-        echo "--- Deployment Description ---"
-        kubectl -n $namespace describe deployment $name
-        echo "--- Recent Events ---"
-        kubectl -n $namespace get events --sort-by='.lastTimestamp' | tail -10
+        kubectl -n $namespace get pods || true
+        echo "--- Events ---"
+        kubectl -n $namespace get events --sort-by='.lastTimestamp' | tail -10 || true
         exit 1
     fi
     echo "[✓] $name is ready"
 }
 
-cleanup() {
-    local exit_code=$?
-    if [[ $exit_code -ne 0 ]]; then
-        echo "[!] Script failed. Cleaning up..."
-        kubectl delete namespace sre-companion-demo --ignore-not-found
-    fi
-}
-trap cleanup EXIT
-
 # Main installation
 main() {
     validate_prerequisites
     validate_anthropic_key
-    check_existing_runtime
-
-    echo "[+] Starting Minikube with adequate resources (within Colima limits)"
-    # Use 6 CPUs and 12GB RAM to stay within Colima's 8 CPU / 16GB allocation
-    minikube start --cpus=6 --memory=12288mb --disk-size=40g --driver=docker
+    
+    # Force cleanup any existing state
+    force_cleanup
+    
+    # Setup Docker runtime
+    setup_docker_runtime
+    
+    # Verify Docker is working
+    echo "[+] Verifying Docker connectivity..."
+    if ! docker ps >/dev/null 2>&1; then
+        echo "ERROR: Docker is not responding properly"
+        exit 1
+    fi
+    
+    echo "[+] Starting fresh Minikube cluster..."
+    minikube start --cpus=6 --memory=12288mb --disk-size=40g --driver=docker --force
+    
+    # Verify Minikube is working
+    echo "[+] Verifying Minikube cluster..."
+    kubectl get nodes
+    kubectl cluster-info
     
     echo "[+] Deploying core infrastructure"
     kubectl apply -f k8s/namespace.yaml
@@ -112,12 +149,15 @@ main() {
     kubectl apply -f k8s/deployment-green.yaml
     kubectl apply -f k8s/service.yaml
 
-    echo "[+] Installing Prometheus stack via Helm"
+    echo "[+] Adding Helm repositories..."
     helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
     helm repo update
+
+    echo "[+] Installing Prometheus stack via Helm"
     helm install prom-stack prometheus-community/kube-prometheus-stack \
     --namespace monitoring --create-namespace \
-    -f kagent/monitoring/values.yaml
+    -f kagent/monitoring/values.yaml \
+    --wait --timeout=10m
 
     echo "[+] Installing kagent CRDs"
     helm install kagent-crds oci://ghcr.io/kagent-dev/kagent/helm/kagent-crds \
@@ -141,8 +181,11 @@ main() {
     kubectl apply -f kagent/memory.yaml
     kubectl apply -f kagent/agent.yaml
     
-    if [[ -f "kagent/session.yaml" ]]; then
-        kubectl apply -f kagent/session.yaml || echo "[!] Session CRD may not be available"
+    # Handle session.yaml gracefully
+    if [[ -f "kagent/session.yaml" ]] && kubectl get crd sessions.kagent.dev >/dev/null 2>&1; then
+        kubectl apply -f kagent/session.yaml
+    else
+        echo "[!] Skipping session.yaml (CRD not available or file missing)"
     fi
     
     kubectl apply -f kagent/failover-agent-config.yaml
@@ -152,15 +195,20 @@ main() {
     wait_for_deployment failover-controller sre-companion-demo 120
 
     echo ""
-    echo "Installation completed successfully!"
+    echo "========================================="
+    echo "✅ Installation completed successfully!"
+    echo "========================================="
     echo ""
     echo "NEXT STEPS:"
-    echo "1. Wait for agent pods: kubectl -n kagent get pods"
+    echo "1. Check all pods: kubectl get pods --all-namespaces"
     echo "2. Get app URL: minikube service web -n sre-companion-demo --url"
     echo "3. Open kagent dashboard: kubectl -n kagent port-forward service/kagent-ui 8080:80"
     echo ""
     echo "Blue deployment: 2 replicas (active)"
     echo "Green deployment: 0 replicas (standby)"
+    echo ""
+    echo "To test failover: kubectl scale deployment web-blue --replicas=0 -n sre-companion-demo"
+    echo "To load test: ./scripts/load-test.sh"
 }
 
 main "$@"
