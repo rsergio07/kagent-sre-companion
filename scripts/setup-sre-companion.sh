@@ -19,102 +19,37 @@ validate_openai_key() {
     echo "[+] OpenAI API key validated"
 }
 
-check_existing_runtime() {
-    if minikube status >/dev/null 2>&1; then
-        echo "[!] Minikube already running, stopping first..."
-        minikube stop
-    fi
-    
-    # Check if Colima is running and configure it properly
-    if command -v colima >/dev/null 2>&1; then
-        echo "[+] Configuring Colima for adequate resources..."
-        if colima status >/dev/null 2>&1; then
-            echo "[!] Stopping Colima to reconfigure..."
-            colima stop
-        fi
-        echo "[+] Starting Colima with proper resource allocation..."
-        colima start --cpu 8 --memory 16 --disk 60
-        echo "[+] Colima configured successfully"
-    elif docker info >/dev/null 2>&1; then
-        echo "[+] Docker runtime detected (not Colima)"
-    else
-        echo "ERROR: No Docker runtime available. Please install Docker Desktop or Colima"
-        exit 1
-    fi
-}
-
 wait_for_deployment() {
     local name=$1 namespace=$2 timeout=${3:-300}
     echo "[+] Waiting for $name deployment to be ready (${timeout}s timeout)..."
     if ! kubectl wait --for=condition=available --timeout=${timeout}s deployment/$name -n $namespace; then
         echo "ERROR: $name failed to become ready within ${timeout}s"
-        echo "--- Pod Status ---"
-        kubectl -n $namespace get pods -l app.kubernetes.io/name=$name
-        echo "--- Deployment Description ---"
-        kubectl -n $namespace describe deployment $name
-        echo "--- Recent Events ---"
-        kubectl -n $namespace get events --sort-by='.lastTimestamp' | tail -10
         exit 1
     fi
     echo "[✓] $name is ready"
 }
 
-cleanup() {
-    local exit_code=$?
-    if [[ $exit_code -ne 0 ]]; then
-        echo "[!] Script failed. Cleaning up..."
-        kubectl delete namespace sre-companion-demo --ignore-not-found
-    fi
-}
-trap cleanup EXIT
-
 # Main installation
 main() {
     validate_prerequisites
     validate_openai_key
-    check_existing_runtime
 
-    echo "[+] Starting Minikube with adequate resources (within Colima limits)"
-    # Use 6 CPUs and 12GB RAM to stay within Colima's 8 CPU / 16GB allocation
+    echo "[+] Starting Minikube with adequate resources"
     minikube start --cpus=6 --memory=12288mb --disk-size=40g --driver=docker
     
-    echo "[+] Cleaning old namespaces"
-    kubectl delete namespace sre-companion-demo --ignore-not-found
-    kubectl create namespace sre-companion-demo
-    
-    echo "[+] Ensuring resilience-demo image is available offline"
-    IMAGE_TAG="resilience-demo:1.1"
-    APP_TAR="images/resilience-demo_1.1.tar"
+    echo "[+] Deploying core infrastructure"
+    kubectl apply -f k8s/namespace.yaml
+    kubectl apply -f k8s/deployment-blue.yaml
+    kubectl apply -f k8s/deployment-green.yaml
+    kubectl apply -f k8s/service.yaml
 
-    if docker image inspect "${IMAGE_TAG}" >/dev/null 2>&1; then
-        echo "[✓] Found ${IMAGE_TAG} in local Docker cache"
-    elif [[ -f "${APP_TAR}" ]]; then
-        echo "[+] Loading app image from TAR: ${APP_TAR}"
-        docker load -i "${APP_TAR}"
-    else
-        echo "[!] WARNING: App image ${IMAGE_TAG} not found and ${APP_TAR} missing"
-        echo "    The demo will attempt to pull the image from a registry (requires internet)"
-    fi
-
-    echo "[+] Preloading app image into Minikube"
-    minikube image load "${IMAGE_TAG}" || true
-    
-    echo "[+] Deploying demo workloads (blue/green)"
-    kubectl apply -n sre-companion-demo -f ./sre-companion-demo/k8s/deployment-blue.yaml
-    kubectl apply -n sre-companion-demo -f ./sre-companion-demo/k8s/deployment-green.yaml
-    kubectl apply -n sre-companion-demo -f ./sre-companion-demo/k8s/service.yaml
-
-    echo "[setup] Installing Prometheus stack via Helm..."
+    echo "[+] Installing Prometheus stack via Helm"
+    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+    helm repo update
     helm install prom-stack prometheus-community/kube-prometheus-stack \
     --namespace monitoring --create-namespace \
-    -f ./sre-companion-dem./kagent/monitoring/values.yaml
+    -f kagent/monitoring/values.yaml
 
-    echo "[+] Installing kagent CLI (user mode)"
-    mkdir -p ./bin
-    curl -sL https://cr.kagent.dev/v0.5.5/kagent-darwin-arm64 -o ./bin/kubectl-kagent
-    chmod +x ./bin/kubectl-kagent
-    export PATH="$(pwd)/bin:$PATH"
-    
     echo "[+] Installing kagent CRDs"
     helm install kagent-crds oci://ghcr.io/kagent-dev/kagent/helm/kagent-crds \
     --version 0.5.5 --namespace kagent --create-namespace --wait
@@ -123,71 +58,37 @@ main() {
     helm install kmcp-crds oci://ghcr.io/kagent-dev/kmcp/helm/kmcp-crds \
     --version 0.1.5 --namespace kmcp-system --create-namespace --wait
     
-    echo "[+] Creating OpenAI secret securely"
-    kubectl delete secret openai-secret -n kagent --ignore-not-found
-    kubectl create secret generic openai-secret -n kagent \
-    --from-literal=api-key="${OPENAI_API_KEY}"
-    
-    echo "[+] Installing Kagent core components"
+    echo "[+] Installing kagent core components"
     helm install kagent oci://ghcr.io/kagent-dev/kagent/helm/kagent \
     --version 0.5.5 --namespace kagent \
     --set providers.openAI.apiKey="${OPENAI_API_KEY}" \
     --wait --timeout=10m
     
-    # Wait for controller to be fully ready
     wait_for_deployment kagent-controller kagent 300
     
-    echo "[+] Verifying all CRDs are available"
-    kubectl get crd | grep kagent
-    
-    # Check if sessions CRD exists
-    if kubectl get crd sessions.kagent.dev >/dev/null 2>&1; then
-        echo "[✓] sessions.kagent.dev CRD found"
-        SESSION_CRD_EXISTS=true
-    else
-        echo "[!] sessions.kagent.dev CRD not found - will skip session.yaml"
-        SESSION_CRD_EXISTS=false
-    fi
-    
     echo "[+] Applying kagent configurations"
-    kubectl apply -f ./sre-companion-dem./kagent/modelconfig.yaml
-    kubectl apply -f ./sre-companion-dem./kagent/mcpserver.yaml
-    kubectl apply -f ./sre-companion-dem./kagent/memory.yaml
-    kubectl apply -f ./sre-companion-dem./kagent/agent.yaml
+    kubectl apply -f kagent/modelconfig.yaml
+    kubectl apply -f kagent/mcpserver.yaml
+    kubectl apply -f kagent/memory.yaml
+    kubectl apply -f kagent/agent.yaml
     
-    # Check if session.yaml exists and if Session CRD is available
-    if [[ -f "./sre-companion-dem./kagent/session.yaml" ]]; then
-        if kubectl get crd sessions.kagent.dev >/dev/null 2>&1; then
-            kubectl apply -f ./sre-companion-dem./kagent/session.yaml
-            echo "[✓] Session configuration applied"
-        else
-            echo "[!] Session CRD not available in kagent v0.5.5 - skipping session.yaml"
-            echo "    This is likely due to Session resources being deprecated or moved"
-            echo "    The demo should work without explicit Session resources"
-        fi
-    else
-        echo "[!] session.yaml file not found - skipping"
+    if [[ -f "kagent/session.yaml" ]]; then
+        kubectl apply -f kagent/session.yaml || echo "[!] Session CRD may not be available"
     fi
     
-    kubectl apply -f ./sre-companion-dem./kagent/failover-agent-config.yaml
+    kubectl apply -f kagent/failover-agent-config.yaml
 
     echo "[+] Deploying autonomous failover controller"
-    kubectl apply -f ./sre-companion-dem./controllers/failover-controller.yaml
-
-    # Wait for the controller to be ready
+    kubectl apply -f controllers/failover-controller.yaml
     wait_for_deployment failover-controller sre-companion-demo 120
 
-    echo "[+] Verifying failover controller is monitoring"
-    sleep 5
-    kubectl logs deployment/failover-controller -n sre-companion-demo --tail=10
-    
     echo ""
     echo "Installation completed successfully!"
     echo ""
     echo "NEXT STEPS:"
     echo "1. Wait for agent pods: kubectl -n kagent get pods"
     echo "2. Get app URL: minikube service web -n sre-companion-demo --url"
-    echo "3. Open Kagent dashboard: ./bin/kubectl-kagent dashboard"
+    echo "3. Open kagent dashboard: kubectl -n kagent port-forward service/kagent-ui 8080:80"
     echo ""
     echo "Blue deployment: 2 replicas (active)"
     echo "Green deployment: 0 replicas (standby)"
