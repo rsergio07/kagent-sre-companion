@@ -143,6 +143,10 @@ main() {
     kubectl get nodes
     kubectl cluster-info
     
+    echo "[+] Building and loading demo application image..."
+    docker build -t resilience-demo:1.1 .
+    minikube image load resilience-demo:1.1
+    
     echo "[+] Deploying core infrastructure"
     kubectl apply -f k8s/namespace.yaml
     kubectl apply -f k8s/deployment-blue.yaml
