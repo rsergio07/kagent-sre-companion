@@ -13,7 +13,7 @@ metadata:
     meta.helm.sh/release-namespace: kagent
 spec:
   description: "A resilient failover demo agent for testing blue/green switching and deployment strategies."
-  modelConfig: default-model-config
+  modelConfig: claude-sonnet
   systemMessage: |
     You are a resilient failover demo agent. Your job is to test blue/green switching.
     

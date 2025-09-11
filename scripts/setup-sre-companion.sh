@@ -10,13 +10,13 @@ validate_prerequisites() {
     command -v docker >/dev/null || { echo "ERROR: docker is required"; exit 1; }
 }
 
-validate_openai_key() {
-    if [[ -z "${OPENAI_API_KEY:-}" ]]; then
-        echo "ERROR: OPENAI_API_KEY environment variable is required"
-        echo "Please set it with: export OPENAI_API_KEY='your-api-key-here'"
+validate_anthropic_key() {
+    if [[ -z "${ANTHROPIC_API_KEY:-}" ]]; then
+        echo "ERROR: ANTHROPIC_API_KEY environment variable is required"
+        echo "Please set it with: export ANTHROPIC_API_KEY='your-api-key-here'"
         exit 1
     fi
-    echo "[+] OpenAI API key validated"
+    echo "[+] Anthropic API key validated"
 }
 
 wait_for_deployment() {
@@ -32,7 +32,7 @@ wait_for_deployment() {
 # Main installation
 main() {
     validate_prerequisites
-    validate_openai_key
+    validate_anthropic_key
 
     echo "[+] Starting Minikube with adequate resources"
     minikube start --cpus=6 --memory=12288mb --disk-size=40g --driver=docker
@@ -61,7 +61,7 @@ main() {
     echo "[+] Installing kagent core components"
     helm install kagent oci://ghcr.io/kagent-dev/kagent/helm/kagent \
     --version 0.5.5 --namespace kagent \
-    --set providers.openAI.apiKey="${OPENAI_API_KEY}" \
+    --set providers.anthropic.apiKey="${ANTHROPIC_API_KEY}" \
     --wait --timeout=10m
     
     wait_for_deployment kagent-controller kagent 300

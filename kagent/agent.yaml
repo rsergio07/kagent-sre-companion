@@ -4,7 +4,7 @@ metadata:
   name: failover-agent
   namespace: kagent
 spec:
-  modelConfig: openai-gpt4
+  modelConfig: claude-sonnet
   systemMessage: |
     You are a resilient failover demo agent. Your job is to test blue/green switching.
   tools:
