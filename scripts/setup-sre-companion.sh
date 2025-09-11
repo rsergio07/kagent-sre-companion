@@ -19,22 +19,91 @@ validate_anthropic_key() {
     echo "[+] Anthropic API key validated"
 }
 
+check_existing_runtime() {
+    if minikube status >/dev/null 2>&1; then
+        echo "[!] Minikube already running, stopping first..."
+        minikube stop
+    fi
+    
+    # Check if Colima is available and handle it properly
+    if command -v colima >/dev/null 2>&1; then
+        echo "[+] Configuring Colima for adequate resources..."
+        
+        # Stop any existing Colima instance
+        if colima status >/dev/null 2>&1; then
+            echo "[!] Stopping existing Colima instance..."
+            colima stop
+        fi
+        
+        # Delete existing instance to avoid conflicts
+        echo "[+] Cleaning up existing Colima instance..."
+        colima delete --force >/dev/null 2>&1 || true
+        
+        # Start fresh with proper resources
+        echo "[+] Starting fresh Colima instance with proper resource allocation..."
+        if ! colima start --cpu 8 --memory 16 --disk 60 --vm-type vz; then
+            echo "[!] VZ driver failed, trying with qemu..."
+            colima start --cpu 8 --memory 16 --disk 60 --vm-type qemu
+        fi
+        
+        # Wait for Docker to be available
+        echo "[+] Waiting for Docker daemon to be ready..."
+        for i in {1..30}; do
+            if docker info >/dev/null 2>&1; then
+                echo "[✓] Docker daemon is ready"
+                break
+            fi
+            echo "    Waiting for Docker... ($i/30)"
+            sleep 2
+        done
+        
+        if ! docker info >/dev/null 2>&1; then
+            echo "ERROR: Docker daemon failed to start after 60 seconds"
+            exit 1
+        fi
+        
+        echo "[+] Colima configured successfully"
+    elif docker info >/dev/null 2>&1; then
+        echo "[+] Docker runtime detected (not Colima)"
+    else
+        echo "ERROR: No Docker runtime available. Please install Docker Desktop or Colima"
+        exit 1
+    fi
+}
+
 wait_for_deployment() {
     local name=$1 namespace=$2 timeout=${3:-300}
     echo "[+] Waiting for $name deployment to be ready (${timeout}s timeout)..."
     if ! kubectl wait --for=condition=available --timeout=${timeout}s deployment/$name -n $namespace; then
         echo "ERROR: $name failed to become ready within ${timeout}s"
+        echo "--- Pod Status ---"
+        kubectl -n $namespace get pods -l app.kubernetes.io/name=$name
+        echo "--- Deployment Description ---"
+        kubectl -n $namespace describe deployment $name
+        echo "--- Recent Events ---"
+        kubectl -n $namespace get events --sort-by='.lastTimestamp' | tail -10
         exit 1
     fi
     echo "[✓] $name is ready"
 }
 
+cleanup() {
+    local exit_code=$?
+    if [[ $exit_code -ne 0 ]]; then
+        echo "[!] Script failed. Cleaning up..."
+        kubectl delete namespace sre-companion-demo --ignore-not-found
+    fi
+}
+trap cleanup EXIT
+
 # Main installation
 main() {
     validate_prerequisites
     validate_anthropic_key
+    check_existing_runtime
 
-    echo "[+] Starting Minikube with adequate resources"
+    echo "[+] Starting Minikube with adequate resources (within Colima limits)"
+    # Use 6 CPUs and 12GB RAM to stay within Colima's 8 CPU / 16GB allocation
     minikube start --cpus=6 --memory=12288mb --disk-size=40g --driver=docker
     
     echo "[+] Deploying core infrastructure"
