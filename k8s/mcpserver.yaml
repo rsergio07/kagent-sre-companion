@@ -1,0 +1,13 @@
+apiVersion: kagent.dev/v1alpha1
+kind: MCPServer
+metadata:
+  name: k8s-mcp
+  namespace: kagent
+spec:
+  transportType: http
+  httpTransport:
+    path: /mcp
+    targetPort: 8080
+  deployment:
+    image: ghcr.io/kagent-dev/mcp-k8s:latest
+    port: 8080

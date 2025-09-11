@@ -1,0 +1,23 @@
+# Local images and artifacts
+images/*.tar
+*.tar
+
+# macOS files
+.DS_Store
+**/.DS_Store
+
+# Agent logs
+sre_companion_decisions.log
+operational_insights.log
+bin/
+
+# Environment variables
+.env
+.env.local
+
+# IDE files
+.vscode/
+.idea/
+
+# Kubernetes secrets
+**/secrets/

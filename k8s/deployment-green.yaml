@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-green
+  namespace: mcp-failover-clean
+  labels:
+    app: web
+    version: green
+spec:
+  replicas: 0
+  selector:
+    matchLabels:
+      app: web
+      version: green
+  template:
+    metadata:
+      labels:
+        app: web
+        version: green
+    spec:
+      containers:
+      - name: web
+        image: resilience-demo:1.1
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+        env:
+        - name: COLOR
+          value: "#34d399"
+        - name: REGION
+          value: "green"
+        - name: VERSION
+          value: "v1.0.0"
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: "40m"
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "256Mi"

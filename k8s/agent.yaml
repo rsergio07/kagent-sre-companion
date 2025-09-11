@@ -1,0 +1,14 @@
+apiVersion: kagent.dev/v1alpha1
+kind: Agent
+metadata:
+  name: failover-agent
+  namespace: kagent
+spec:
+  modelConfig: openai-gpt4
+  systemMessage: |
+    You are a resilient failover demo agent. Your job is to test blue/green switching.
+  tools:
+    - type: McpServer
+      mcpServer:
+        toolServer: k8s-mcp
+        toolNames: []

@@ -1,0 +1,4 @@
+namespace: monitoring
+prometheus:
+  prometheusSpec:
+    serviceMonitorSelectorNilUsesHelmValues: false

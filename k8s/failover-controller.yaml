@@ -1,0 +1,218 @@
+---
+# ServiceAccount for the failover controller
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: failover-controller
+  namespace: mcp-failover-clean
+
+---
+# ClusterRole with permissions to watch services and endpoints
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: failover-controller-role
+rules:
+- apiGroups: [""]
+  resources: ["services", "endpoints"]
+  verbs: ["get", "list", "watch", "patch", "update"]
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["create"]
+
+---
+# ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: failover-controller-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: failover-controller-role
+subjects:
+- kind: ServiceAccount
+  name: failover-controller
+  namespace: mcp-failover-clean
+
+---
+# ConfigMap with the monitoring script
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: failover-controller-script
+  namespace: mcp-failover-clean
+data:
+  monitor.py: |
+    #!/usr/bin/env python3
+    import json
+    import time
+    import requests
+    import os
+    from kubernetes import client, config, watch
+
+    # Load in-cluster config
+    config.load_incluster_config()
+    v1 = client.CoreV1Api()
+
+    SERVICE_NAME = "web"
+    NAMESPACE = "mcp-failover-clean"
+    CHECK_INTERVAL = 10  # seconds
+
+    def log(message):
+        print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {message}", flush=True)
+
+    def get_service_selector():
+        try:
+            service = v1.read_namespaced_service(SERVICE_NAME, NAMESPACE)
+            return service.spec.selector
+        except Exception as e:
+            log(f"Error getting service selector: {e}")
+            return None
+
+    def get_service_endpoints():
+        try:
+            endpoints = v1.read_namespaced_endpoints(SERVICE_NAME, NAMESPACE)
+            if endpoints.subsets:
+                return len([addr for subset in endpoints.subsets 
+                           for addr in (subset.addresses or [])])
+            return 0
+        except Exception as e:
+            log(f"Error getting endpoints: {e}")
+            return 0
+
+    def switch_to_green():
+        try:
+            # Patch the service to point to green
+            patch = {
+                "spec": {
+                    "selector": {
+                        "app": "web",
+                        "version": "green"
+                    }
+                }
+            }
+            
+            v1.patch_namespaced_service(
+                name=SERVICE_NAME,
+                namespace=NAMESPACE,
+                body=patch
+            )
+            log("✅ Successfully switched service selector to green!")
+            return True
+        except Exception as e:
+            log(f"❌ Error switching to green: {e}")
+            return False
+
+    def create_event(reason, message):
+        try:
+            event = client.V1Event(
+                metadata=client.V1ObjectMeta(
+                    name=f"failover-{int(time.time())}",
+                    namespace=NAMESPACE
+                ),
+                involved_object=client.V1ObjectReference(
+                    api_version="v1",
+                    kind="Service",
+                    name=SERVICE_NAME,
+                    namespace=NAMESPACE
+                ),
+                reason=reason,
+                message=message,
+                first_time=f"{time.strftime('%Y-%m-%dT%H:%M:%SZ')}",
+                last_time=f"{time.strftime('%Y-%m-%dT%H:%M:%SZ')}",
+                count=1,
+                type="Normal" if reason == "FailoverSuccess" else "Warning"
+            )
+            v1.create_namespaced_event(namespace=NAMESPACE, body=event)
+        except Exception as e:
+            log(f"Warning: Could not create event: {e}")
+
+    def main():
+        log("🚀 Starting Automatic Failover Controller")
+        log(f"Monitoring service '{SERVICE_NAME}' in namespace '{NAMESPACE}'")
+        
+        while True:
+            try:
+                selector = get_service_selector()
+                endpoints_count = get_service_endpoints()
+                
+                if selector and selector.get('version') == 'blue':
+                    log(f"Service points to blue, endpoints: {endpoints_count}")
+                    
+                    if endpoints_count == 0:
+                        log("🚨 ALERT: Blue has no endpoints! Initiating failover...")
+                        create_event("FailoverTriggered", "Blue deployment has no available endpoints")
+                        
+                        if switch_to_green():
+                            create_event("FailoverSuccess", "Automatically switched traffic to green deployment")
+                            log("✅ Failover completed successfully")
+                        else:
+                            create_event("FailoverFailed", "Failed to switch traffic to green deployment")
+                            log("❌ Failover failed")
+                    else:
+                        log("✅ Blue is healthy")
+                        
+                elif selector and selector.get('version') == 'green':
+                    log(f"Service points to green, endpoints: {endpoints_count}")
+                    if endpoints_count == 0:
+                        log("⚠️  Warning: Green also has no endpoints!")
+                else:
+                    log(f"Unknown selector state: {selector}")
+                    
+            except Exception as e:
+                log(f"Error in monitoring loop: {e}")
+            
+            time.sleep(CHECK_INTERVAL)
+
+    if __name__ == "__main__":
+        main()
+
+---
+# Deployment for the failover controller
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: failover-controller
+  namespace: mcp-failover-clean
+  labels:
+    app: failover-controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: failover-controller
+  template:
+    metadata:
+      labels:
+        app: failover-controller
+    spec:
+      serviceAccountName: failover-controller
+      containers:
+      - name: monitor
+        image: python:3.9-slim
+        command: ["/bin/bash"]
+        args:
+          - -c
+          - |
+            pip install kubernetes requests
+            python /scripts/monitor.py
+        volumeMounts:
+        - name: script
+          mountPath: /scripts
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+      volumes:
+      - name: script
+        configMap:
+          name: failover-controller-script
+          defaultMode: 0755
+      restartPolicy: Always
