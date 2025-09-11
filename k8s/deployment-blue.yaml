@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: web-blue
-  namespace: mcp-failover-clean
+  namespace: sre-companion-demo
   labels:
     app: web
     version: blue

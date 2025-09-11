@@ -63,7 +63,7 @@ cleanup() {
     local exit_code=$?
     if [[ $exit_code -ne 0 ]]; then
         echo "[!] Script failed. Cleaning up..."
-        kubectl delete namespace mcp-failover-clean --ignore-not-found
+        kubectl delete namespace sre-companion-demo --ignore-not-found
     fi
 }
 trap cleanup EXIT
@@ -79,8 +79,8 @@ main() {
     minikube start --cpus=6 --memory=12288mb --disk-size=40g --driver=docker
     
     echo "[+] Cleaning old namespaces"
-    kubectl delete namespace mcp-failover-clean --ignore-not-found
-    kubectl create namespace mcp-failover-clean
+    kubectl delete namespace sre-companion-demo --ignore-not-found
+    kubectl create namespace sre-companion-demo
     
     echo "[+] Ensuring resilience-demo image is available offline"
     IMAGE_TAG="resilience-demo:1.1"
@@ -100,14 +100,14 @@ main() {
     minikube image load "${IMAGE_TAG}" || true
     
     echo "[+] Deploying demo workloads (blue/green)"
-    kubectl apply -n mcp-failover-clean -f ./mcp-failover-clean/k8s/deployment-blue.yaml
-    kubectl apply -n mcp-failover-clean -f ./mcp-failover-clean/k8s/deployment-green.yaml
-    kubectl apply -n mcp-failover-clean -f ./mcp-failover-clean/k8s/service.yaml
+    kubectl apply -n sre-companion-demo -f ./sre-companion-demo/k8s/deployment-blue.yaml
+    kubectl apply -n sre-companion-demo -f ./sre-companion-demo/k8s/deployment-green.yaml
+    kubectl apply -n sre-companion-demo -f ./sre-companion-demo/k8s/service.yaml
 
     echo "[setup] Installing Prometheus stack via Helm..."
     helm install prom-stack prometheus-community/kube-prometheus-stack \
     --namespace monitoring --create-namespace \
-    -f ./mcp-failover-clean/k8s/monitoring/values.yaml
+    -f ./sre-companion-dem./kagent/monitoring/values.yaml
 
     echo "[+] Installing kagent CLI (user mode)"
     mkdir -p ./bin
@@ -150,15 +150,15 @@ main() {
     fi
     
     echo "[+] Applying kagent configurations"
-    kubectl apply -f ./mcp-failover-clean/k8s/modelconfig.yaml
-    kubectl apply -f ./mcp-failover-clean/k8s/mcpserver.yaml
-    kubectl apply -f ./mcp-failover-clean/k8s/memory.yaml
-    kubectl apply -f ./mcp-failover-clean/k8s/agent.yaml
+    kubectl apply -f ./sre-companion-dem./kagent/modelconfig.yaml
+    kubectl apply -f ./sre-companion-dem./kagent/mcpserver.yaml
+    kubectl apply -f ./sre-companion-dem./kagent/memory.yaml
+    kubectl apply -f ./sre-companion-dem./kagent/agent.yaml
     
     # Check if session.yaml exists and if Session CRD is available
-    if [[ -f "./mcp-failover-clean/k8s/session.yaml" ]]; then
+    if [[ -f "./sre-companion-dem./kagent/session.yaml" ]]; then
         if kubectl get crd sessions.kagent.dev >/dev/null 2>&1; then
-            kubectl apply -f ./mcp-failover-clean/k8s/session.yaml
+            kubectl apply -f ./sre-companion-dem./kagent/session.yaml
             echo "[✓] Session configuration applied"
         else
             echo "[!] Session CRD not available in kagent v0.5.5 - skipping session.yaml"
@@ -169,24 +169,24 @@ main() {
         echo "[!] session.yaml file not found - skipping"
     fi
     
-    kubectl apply -f ./mcp-failover-clean/k8s/failover-agent-config.yaml
+    kubectl apply -f ./sre-companion-dem./kagent/failover-agent-config.yaml
 
     echo "[+] Deploying autonomous failover controller"
-    kubectl apply -f ./mcp-failover-clean/k8s/failover-controller.yaml
+    kubectl apply -f ./sre-companion-dem./controllers/failover-controller.yaml
 
     # Wait for the controller to be ready
-    wait_for_deployment failover-controller mcp-failover-clean 120
+    wait_for_deployment failover-controller sre-companion-demo 120
 
     echo "[+] Verifying failover controller is monitoring"
     sleep 5
-    kubectl logs deployment/failover-controller -n mcp-failover-clean --tail=10
+    kubectl logs deployment/failover-controller -n sre-companion-demo --tail=10
     
     echo ""
     echo "Installation completed successfully!"
     echo ""
     echo "NEXT STEPS:"
     echo "1. Wait for agent pods: kubectl -n kagent get pods"
-    echo "2. Get app URL: minikube service web -n mcp-failover-clean --url"
+    echo "2. Get app URL: minikube service web -n sre-companion-demo --url"
     echo "3. Open Kagent dashboard: ./bin/kubectl-kagent dashboard"
     echo ""
     echo "Blue deployment: 2 replicas (active)"
