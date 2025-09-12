@@ -105,23 +105,39 @@ This process provisions the Flask demonstration application with blue/green conf
 
 The deployment automatically configures port forwarding for all services and launches browser windows for immediate access. Manual port forwarding configuration enables flexible access patterns:
 
+### Access Points
+
+**Application interface (blue/green demonstration)**  
+
 ```bash
-# Application interface (blue/green demonstration)
 kubectl -n sre-companion-demo port-forward service/web 8082:80
-[http://localhost:8082](http://localhost:8082)
-
-# Kagent AI dashboard (conversational operations)
-kubectl -n kagent port-forward service/kagent-ui 8081:80
-[http://localhost:8081](http://localhost:8081)
-
-# Grafana monitoring dashboard (metrics and visualization)
-kubectl -n monitoring port-forward service/prom-stack-grafana 3000:80
-[http://localhost:3000](http://localhost:3000)
-
-# Prometheus monitoring dashboard (raw metrics access)
-kubectl -n monitoring port-forward svc/prom-stack-kube-prometheus-prometheus 9090:9090
-[http://localhost:9090](http://localhost:9090)
 ```
+
+[➡ Open Application](http://localhost:8082)
+
+**Kagent AI dashboard (conversational operations)**
+
+```bash
+kubectl -n kagent port-forward service/kagent-ui 8081:80
+```
+
+[➡ Open Kagent UI](http://localhost:8081)
+
+**Grafana monitoring dashboard (metrics and visualization)**
+
+```bash
+kubectl -n monitoring port-forward service/prom-stack-grafana 3000:80
+```
+
+[➡ Open Grafana](http://localhost:3000)
+
+**Prometheus monitoring dashboard (raw metrics access)**
+
+```bash
+kubectl -n monitoring port-forward svc/prom-stack-kube-prometheus-prometheus 9090:9090
+```
+
+[➡ Open Prometheus](http://localhost:9090)
 
 Port conflict resolution may require process termination when ports remain bound after session closure:
 
