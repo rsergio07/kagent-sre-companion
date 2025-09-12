@@ -238,7 +238,7 @@ kubectl top pods -n sre-companion-demo
 
 **Objective**: Demonstrate intelligent automation responding to infrastructure failures.
 
-**Trigger Commands**:
+**Method 1: Simple Scaling (Quick)**:
 ```bash
 # Force blue deployment failure to trigger automatic failover
 kubectl scale deployment web-blue --replicas=0 -n sre-companion-demo
@@ -247,12 +247,27 @@ kubectl scale deployment web-blue --replicas=0 -n sre-companion-demo
 kubectl logs deployment/failover-controller -n sre-companion-demo --tail=20
 ```
 
+**Method 2: Sophisticated Failure Simulation**:
+```bash
+# Update script for current namespace
+sed -i '' 's/distributed-resilience/sre-companion-demo/g' scripts/simulate-failure.sh
+
+# Planned outage simulation (automatic restoration)
+./scripts/simulate-failure.sh blue --outage 30
+
+# Pod crash simulation (Kubernetes self-healing)
+./scripts/simulate-failure.sh blue
+```
+
+**Educational Context**: The simulate-failure script provides two distinct failure modes - planned outages that automatically restore after a specified duration, and pod crash scenarios that demonstrate Kubernetes self-healing capabilities. This shows different types of real-world operational scenarios.
+
 **AI Analysis Prompts**:
 - "Did a failover event occur just now? Show me the details."
 - "How long did it take for traffic to switch to the green deployment?"
 - "Which events were recorded by the failover controller?"
+- "Compare the recovery patterns between planned outages and pod crashes."
 
-**Educational Value**: Illustrates how AI can analyze log data and provide context about automated system responses.
+**Educational Value**: Illustrates how AI can analyze different failure modes and provide context about automated system responses, helping teams understand the nuances between various operational scenarios.
 
 ### Phase 3: Load Testing and Scaling
 
