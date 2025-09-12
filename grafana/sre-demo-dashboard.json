@@ -1,0 +1,119 @@
+{
+  "id": null,
+  "title": "SRE Companion Demo Dashboard",
+  "tags": ["sre", "demo", "kagent"],
+  "timezone": "browser",
+  "schemaVersion": 36,
+  "version": 3,
+  "refresh": "10s",
+  "panels": [
+    {
+      "type": "graph",
+      "title": "Application Availability",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "up{namespace=\"sre-companion-demo\"}",
+          "legendFormat": "{{pod}}"
+        }
+      ],
+      "id": 1
+    },
+    {
+      "type": "graph",
+      "title": "Failover Events (Unhealthy Pods)",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "increase(kube_event_count{involved_object_namespace=\"sre-companion-demo\",reason=\"Unhealthy\"}[5m])",
+          "legendFormat": "Unhealthy Events"
+        }
+      ],
+      "id": 2
+    },
+    {
+      "type": "graph",
+      "title": "Error Rate (5xx)",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "rate(http_requests_total{namespace=\"sre-companion-demo\",status=~\"5..\"}[5m])",
+          "legendFormat": "5xx errors"
+        }
+      ],
+      "id": 3
+    },
+    {
+      "type": "graph",
+      "title": "Memory Utilization per Pod",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "container_memory_usage_bytes{namespace=\"sre-companion-demo\"}",
+          "legendFormat": "{{pod}}"
+        }
+      ],
+      "id": 4
+    },
+    {
+      "type": "graph",
+      "title": "CPU Utilization per Pod",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "rate(container_cpu_usage_seconds_total{namespace=\"sre-companion-demo\"}[2m])",
+          "legendFormat": "{{pod}}"
+        }
+      ],
+      "id": 5
+    },
+    {
+      "type": "graph",
+      "title": "Request Latency (p95)",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{namespace=\"sre-companion-demo\"}[5m])) by (le))",
+          "legendFormat": "p95 latency"
+        }
+      ],
+      "id": 6
+    },
+    {
+      "type": "graph",
+      "title": "Namespace Resource Requests vs Limits",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(kube_pod_container_resource_requests_cpu_cores{namespace=\"sre-companion-demo\"})",
+          "legendFormat": "CPU Requests"
+        },
+        {
+          "expr": "sum(kube_pod_container_resource_limits_cpu_cores{namespace=\"sre-companion-demo\"})",
+          "legendFormat": "CPU Limits"
+        },
+        {
+          "expr": "sum(kube_pod_container_resource_requests_memory_bytes{namespace=\"sre-companion-demo\"})",
+          "legendFormat": "Memory Requests"
+        },
+        {
+          "expr": "sum(kube_pod_container_resource_limits_memory_bytes{namespace=\"sre-companion-demo\"})",
+          "legendFormat": "Memory Limits"
+        }
+      ],
+      "id": 7
+    },
+    {
+      "type": "graph",
+      "title": "Pod Restarts",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "increase(kube_pod_container_status_restarts_total{namespace=\"sre-companion-demo\"}[5m])",
+          "legendFormat": "{{pod}}"
+        }
+      ],
+      "id": 8
+    }
+  ]
+}
