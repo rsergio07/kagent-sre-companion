@@ -64,22 +64,45 @@ This script provisions:
 
 ### Access Points
 
+* **[Application interface](http://localhost:8082)**
+
 ```bash
-# Application
 kubectl -n sre-companion-demo port-forward service/web 8082:80
-# → http://localhost:8082
+```
 
-# Kagent UI
+* **[Kagent AI dashboard](http://localhost:8081)**
+
+```bash
 kubectl -n kagent port-forward service/kagent-ui 8081:80
-# → http://localhost:8081
+```
 
-# Grafana
+* **[Grafana monitoring dashboard](http://localhost:3000)**
+
+```bash
 kubectl -n monitoring port-forward service/prom-stack-grafana 3000:80
-# → http://localhost:3000
+```
 
-# Prometheus
+* **[Prometheus monitoring dashboard](http://localhost:9090)**
+
+```bash
 kubectl -n monitoring port-forward svc/prom-stack-kube-prometheus-prometheus 9090:9090
-# → http://localhost:9090
+```
+
+---
+
+### Port Cleanup & Checks
+
+Sometimes ports remain bound after closing terminals or killing `kubectl port-forward`.
+Use the following command to check all relevant ports (8082, 8081, 3000, 9090):
+
+```bash
+lsof -i :8082 -i :8081 -i :3000 -i :9090
+```
+
+To kill any process bound to these ports (⚠️ use with caution):
+
+```bash
+kill -9 <PID>
 ```
 
 ---
