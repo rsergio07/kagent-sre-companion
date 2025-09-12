@@ -52,6 +52,10 @@ kubectl -n kagent port-forward service/kagent-ui 8081:80
 # Grafana monitoring dashboard
 kubectl -n monitoring port-forward service/prom-stack-grafana 3000:80
 # Visit: http://localhost:3000 (admin/password from secret)
+
+# Prometheus monitoring dashboard
+kubectl -n monitoring port-forward svc/prom-stack-kube-prometheus-prometheus 9090:9090
+# Visit: http://localhost:9090
 ```
 
 ## Architecture Overview
