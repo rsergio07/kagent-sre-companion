@@ -1,10 +1,10 @@
 apiVersion: kagent.dev/v1alpha1
 kind: ModelConfig
 metadata:
-  name: claude-sonnet
+  name: openai-sonnet
   namespace: kagent
 spec:
-  provider: Anthropic
-  model: claude-3-5-sonnet-20241022
-  apiKeySecretRef: kagent-anthropic
-  apiKeySecretKey: ANTHROPIC_API_KEY
+  provider: OpenAI
+  model: gpt-4.1-mini
+  apiKeySecretRef: kagent-openai
+  apiKeySecretKey: OPENAI_API_KEY
