@@ -84,7 +84,7 @@ Configure your Anthropic API key through environment variable export to enable A
 ```bash
 # Configure AI model access
 export ANTHROPIC_API_KEY="your-anthropic-key-here"
-export OPENAI_API_KEY="your-openai-key-here"  # Optional alternative
+export OPENAI_API_KEY="your-openai-key-here"
 
 # Clone and navigate to project
 git clone https://github.com/rsergio07/kagent-sre-companion
@@ -108,19 +108,19 @@ The deployment automatically configures port forwarding for all services and lau
 ```bash
 # Application interface (blue/green demonstration)
 kubectl -n sre-companion-demo port-forward service/web 8082:80
-# → [http://localhost:8082](http://localhost:8082)
+[http://localhost:8082](http://localhost:8082)
 
 # Kagent AI dashboard (conversational operations)
 kubectl -n kagent port-forward service/kagent-ui 8081:80
-# → [http://localhost:8081](http://localhost:8081)
+[http://localhost:8081](http://localhost:8081)
 
 # Grafana monitoring dashboard (metrics and visualization)
 kubectl -n monitoring port-forward service/prom-stack-grafana 3000:80
-# → [http://localhost:3000](http://localhost:3000)
+[http://localhost:3000](http://localhost:3000)
 
 # Prometheus monitoring dashboard (raw metrics access)
 kubectl -n monitoring port-forward svc/prom-stack-kube-prometheus-prometheus 9090:9090
-# → [http://localhost:9090](http://localhost:9090)
+[http://localhost:9090](http://localhost:9090)
 ```
 
 Port conflict resolution may require process termination when ports remain bound after session closure:
