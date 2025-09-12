@@ -2,7 +2,7 @@
 
 This repository demonstrates how **Kagent** transforms traditional Site Reliability Engineering (SRE) practices through **AI-powered cluster operations**. Rather than showcasing perfect workflows, this demo deliberately exposes real-world challenges — incomplete metrics, rate limits, and service misconfigurations — transforming them into valuable learning opportunities for modern SRE practices.
 
-The demonstration encompasses intelligent blue/green deployment management, autonomous failover capabilities, conversational cluster operations with AI agents, and seamless integration of monitoring, load testing, and failure simulation into cohesive operational scenarios.
+The demonstration encompasses intelligent blue/green deployment management, autonomous failover capabilities, conversational cluster operations with AI agents, and seamless integration of monitoring, load testing, and failure simulation into cohesive operational scenarios through **hands-on scripted exercises**.
 
 ## Repository Structure and Component Architecture
 
@@ -42,21 +42,36 @@ The **`sre-demo-dashboard.json`** provides a comprehensive Grafana dashboard spe
 
 This dashboard integrates seamlessly with AI agent queries, enabling natural language access to complex metrics analysis and trend identification. The visualization design emphasizes operational decision-making rather than just data display, making it valuable for both human operators and AI-powered analysis.
 
+### Interactive Operational Scripts (`scripts/`)
+
+The **`scripts/`** directory contains the core automation tools that make this demo interactive and realistic. These scripts serve as the primary interface for hands-on operational exercises and enable realistic testing scenarios that mirror production operational patterns.
+
+#### **Load Testing Framework (`load-test.sh`)**
+
+The **`load-test.sh`** script provides sophisticated load generation capabilities with configurable parameters for duration, concurrency, and CPU burn intensity. This script serves multiple purposes: populating monitoring dashboards with realistic operational data, triggering autoscaling policies for scaling behavior analysis, validating system performance under various load conditions, and creating baseline metrics for AI-powered analysis.
+
+The script accepts three primary parameters enabling flexible testing scenarios:
+- **Duration**: Test execution time (default: 120 seconds)
+- **Concurrency**: Simultaneous request threads (default: 150)
+- **CPU Burn**: Milliseconds of CPU work per request (default: 500ms)
+
+Advanced usage patterns include progressive load testing for capacity discovery, stress testing for breaking point identification, sustained load testing for endurance validation, and baseline testing for performance regression analysis.
+
+#### **Chaos Engineering Framework (`simulate-failure.sh`)**
+
+The **`simulate-failure.sh`** script implements controlled failure injection with two distinct operational modes. The **immediate failure mode** triggers rapid pod deletion to demonstrate Kubernetes self-healing capabilities and recovery time measurement. The **controlled outage mode** provides predictable failure scenarios with configurable duration and automatic recovery, enabling comprehensive failover testing and Mean Time To Recovery analysis.
+
+The script supports both blue and green deployment targeting, configurable outage duration for predictable testing scenarios, graceful recovery with replica restoration, and comprehensive logging for post-incident analysis. This enables realistic chaos engineering practices without requiring complex external tools or infrastructure modifications.
+
+#### **Environment Management (`setup-sre-companion.sh` and `cleanup.sh`)**
+
+The **`setup-sre-companion.sh`** script provides comprehensive environment provisioning with robust error handling, prerequisite validation, and automated service configuration. The script manages Docker runtime selection, Minikube cluster provisioning, comprehensive component deployment, and automatic service access configuration.
+
+The **`cleanup.sh`** script ensures complete environment removal including cluster destruction, context cleanup, and artifact removal, enabling reliable reset capabilities for repeated demonstrations and configuration testing.
+
 ### Container Image (`Dockerfile`)
 
 The **`Dockerfile`** implements security and performance best practices for containerized applications. The multi-stage approach uses Python 3.11 slim base images to minimize attack surface while maintaining compatibility. Environment variable configuration enables dynamic behavior modification without requiring image rebuilds, supporting the blue/green deployment pattern through runtime customization.
-
-Resource optimization techniques including dependency caching and minimal layer construction reduce image size and build times while ensuring reliable deployment performance across different cluster environments.
-
-### Automation Scripts (`scripts/`)
-
-The **`setup-sre-companion.sh`** script provides comprehensive environment provisioning with robust error handling and validation. The script implements prerequisite checking, API key validation, Docker runtime management, and sequential deployment of all system components. The automation includes service health verification, port forwarding configuration, and automatic browser launching for immediate access to all system interfaces.
-
-The **`load-test.sh`** script generates controlled traffic patterns for performance testing and scaling demonstrations. The configurable parameters (duration, concurrency, CPU burn) enable reproduction of various operational scenarios including traffic spikes, sustained load conditions, and failover testing under stress.
-
-The **`simulate-failure.sh`** script provides controlled chaos engineering capabilities with two distinct failure modes. The pod deletion mode triggers immediate self-healing demonstrations, while the outage mode creates predictable failover scenarios with controlled recovery timelines. Both modes generate comprehensive logging and integration with the monitoring stack.
-
-The **`cleanup.sh`** script ensures complete environment removal including Minikube cluster destruction, Docker context cleanup, and artifact removal. This enables reliable reset capabilities for repeated demonstrations and different configuration testing.
 
 ## Quick Deployment and Configuration
 
@@ -69,7 +84,7 @@ Configure your Anthropic API key through environment variable export to enable A
 ```bash
 # Configure AI model access
 export ANTHROPIC_API_KEY="your-anthropic-key-here"
-export OPENAI_API_KEY="your-openai-key-here"
+export OPENAI_API_KEY="your-openai-key-here"  # Optional alternative
 
 # Clone and navigate to project
 git clone https://github.com/rsergio07/kagent-sre-companion
@@ -90,30 +105,22 @@ This process provisions the Flask demonstration application with blue/green conf
 
 The deployment automatically configures port forwarding for all services and launches browser windows for immediate access. Manual port forwarding configuration enables flexible access patterns:
 
-### Access Points
-
-* **[Application interface](http://localhost:8082)**
-
 ```bash
+# Application interface (blue/green demonstration)
 kubectl -n sre-companion-demo port-forward service/web 8082:80
-```
+# → [http://localhost:8082](http://localhost:8082)
 
-* **[Kagent AI dashboard](http://localhost:8081)**
-
-```bash
+# Kagent AI dashboard (conversational operations)
 kubectl -n kagent port-forward service/kagent-ui 8081:80
-```
+# → [http://localhost:8081](http://localhost:8081)
 
-* **[Grafana monitoring dashboard](http://localhost:3000)**
-
-```bash
+# Grafana monitoring dashboard (metrics and visualization)
 kubectl -n monitoring port-forward service/prom-stack-grafana 3000:80
-```
+# → [http://localhost:3000](http://localhost:3000)
 
-* **[Prometheus monitoring dashboard](http://localhost:9090)**
-
-```bash
+# Prometheus monitoring dashboard (raw metrics access)
 kubectl -n monitoring port-forward svc/prom-stack-kube-prometheus-prometheus 9090:9090
+# → [http://localhost:9090](http://localhost:9090)
 ```
 
 Port conflict resolution may require process termination when ports remain bound after session closure:
@@ -126,73 +133,277 @@ lsof -i :8082 -i :8081 -i :3000 -i :9090
 kill -9 <PID>
 ```
 
-## Operational Scenarios and Testing Framework
+## Interactive Demonstration Framework
 
-### Load Testing and Performance Validation
+The demonstration progresses through eight comprehensive phases that showcase increasing complexity in AI-augmented SRE practices. Each phase combines hands-on script execution with AI-powered analysis to create realistic operational scenarios.
 
-The integrated load testing framework enables controlled traffic generation for autoscaling demonstrations, failover validation, and performance baseline establishment. The testing utility provides configurable parameters for duration, concurrency, and per-request CPU consumption:
+### **Phase 1: Initial Discovery and Baseline Assessment**
 
+Begin the demonstration by establishing comprehensive cluster awareness through direct Kubernetes API interactions combined with AI-powered analysis. This phase establishes operational baselines and identifies system dependencies.
+
+**Cluster State Discovery:**
 ```bash
-# Baseline performance test (120s duration, 150 concurrent requests, 500ms CPU burn)
-./scripts/load-test.sh
-
-# Traffic spike simulation (120s duration, 300 concurrent requests, 800ms CPU burn)
-./scripts/load-test.sh 120 300 800
-
-# Extended failover test (240s duration, 100 concurrent requests, 400ms CPU burn)
-./scripts/load-test.sh 240 100 400
+kubectl get pods -n sre-companion-demo
+kubectl get deployments,services -n sre-companion-demo
+kubectl describe service web -n sre-companion-demo
 ```
 
-These scenarios populate monitoring dashboards with realistic operational data, trigger Horizontal Pod Autoscaler policies for scaling demonstrations, and provide controlled conditions for autonomous failover testing.
-
-### Failure Simulation and Recovery Testing
-
-The failure simulation framework provides two distinct modes for different operational learning objectives. Pod deletion mode demonstrates Kubernetes self-healing capabilities through immediate pod replacement, while outage mode creates controlled traffic switching scenarios with predictable recovery timelines:
-
+**Baseline Performance Establishment:**
 ```bash
-# Immediate pod deletion (triggers self-healing)
+# Establish performance baseline with light load
+./scripts/load-test.sh 60 50 200
+```
+
+**AI Analysis Queries:**
+- *"What is the current state of my blue/green deployment? Analyze pod health, service routing configuration, and resource allocation patterns."*
+- *"What are the resource requests and limits for each deployment, and are they appropriately sized for the workload?"*
+- *"Show me the service dependencies and network topology for this application."*
+- *"Analyze the baseline performance metrics and establish SLA benchmarks."*
+
+### **Phase 2: Configuration Analysis and Security Assessment**
+
+Conduct comprehensive configuration review and security posture assessment to identify potential vulnerabilities and optimization opportunities before proceeding with operational testing.
+
+**Configuration Review:**
+```bash
+kubectl describe deployment web-blue -n sre-companion-demo
+kubectl describe deployment web-green -n sre-companion-demo
+kubectl get events -n sre-companion-demo --sort-by='.lastTimestamp'
+```
+
+**AI Analysis Queries:**
+- *"Analyze the security configuration of my deployments. Are there any vulnerabilities or misconfigurations?"*
+- *"Review the health probe settings - are they optimally configured for this application type?"*
+- *"What RBAC permissions are configured, and are they following least privilege principles?"*
+- *"Assess the resource limits and requests - do they align with expected workload patterns?"*
+
+### **Phase 3: Controlled Failure Injection and Recovery Analysis**
+
+Execute controlled failure scenarios using the failure simulation script to demonstrate autonomous recovery capabilities and measure system resilience. This phase combines immediate failures with controlled outages to test different recovery patterns.
+
+**Immediate Pod Failure Testing:**
+```bash
+# Start continuous monitoring
+kubectl get pods -n sre-companion-demo -w &
+
+# Trigger immediate pod deletion (tests self-healing)
 ./scripts/simulate-failure.sh blue
 
-# Controlled outage with automatic recovery (30-second outage)
+# Monitor recovery process
+kubectl get events -n sre-companion-demo --sort-by='.lastTimestamp' | tail -10
+```
+
+**Controlled Outage Simulation:**
+```bash
+# Execute controlled outage with predictable timing
 ./scripts/simulate-failure.sh blue --outage 30
 
-# Green deployment outage simulation
+# Test standby deployment failover
 ./scripts/simulate-failure.sh green --outage 15
 ```
 
-### Interactive AI-Powered Operations
+**AI Analysis Queries:**
+- *"Analyze the failover event timing and recovery process. What was the Mean Time To Recovery?"*
+- *"How did the autonomous failover controller respond to the blue deployment failure?"*
+- *"What would happen if we lost 50% of our cluster nodes during peak traffic?"*
+- *"Compare the recovery patterns between immediate failures and controlled outages."*
 
-The demonstration framework progresses through five operational phases that showcase increasing complexity in AI-augmented SRE practices.
+### **Phase 4: Progressive Load Testing and Performance Analysis**
 
-**Phase 1: Cluster State Assessment** begins with direct Kubernetes API interaction combined with AI-powered analysis. Execute `kubectl get pods -n sre-companion-demo` to establish baseline cluster state, then engage the AI system with contextual queries such as *"What is the current state of my blue/green deployment? Analyze pod health, service routing configuration, and resource utilization patterns."*
+Conduct comprehensive load testing using progressive traffic patterns to understand system behavior under various load conditions. This phase combines load generation with real-time performance analysis and scaling behavior assessment.
 
-**Phase 2: Failover Event Simulation** demonstrates autonomous recovery capabilities through controlled failure injection. Scale the blue deployment to zero replicas using `kubectl scale deployment web-blue --replicas=0 -n sre-companion-demo` or execute the automated failure simulation script. Query the AI system for comprehensive analysis: *"Did a failover event occur just now? Provide detailed analysis including transition timing, affected services, recovery metrics, and recommendations for optimization."*
+**Progressive Load Escalation:**
+```bash
+# Light load baseline
+./scripts/load-test.sh 120 50 200
+# AI Query: "Establish our performance baseline during light load conditions"
 
-**Phase 3: Load Testing and Scaling Analysis** combines performance testing with AI-powered analysis of system behavior under stress. Execute comprehensive load testing with `./scripts/load-test.sh 300 200 1000` while requesting AI analysis: *"How are the deployment pods performing under the current stress test? Analyze resource utilization patterns, scaling events, performance degradation indicators, and capacity planning recommendations."*
+# Medium load testing
+./scripts/load-test.sh 120 150 400  
+# AI Query: "How do response times and resource utilization change as load increases?"
 
-**Phase 4: Root Cause Analysis and Event Correlation** demonstrates advanced troubleshooting capabilities through log analysis and cross-system event correlation. Examine controller logs using `kubectl logs deployment/failover-controller -n sre-companion-demo` and engage AI for comprehensive analysis: *"Correlate failover-controller events with CPU metrics, service routing changes, and user impact indicators. Identify anomalies, optimization opportunities, and preventive measures."*
+# Heavy load stress testing
+./scripts/load-test.sh 120 300 700
+# AI Query: "Identify performance degradation patterns and autoscaling triggers"
 
-**Phase 5: Strategic Optimization Recommendations** leverages AI-powered analysis for long-term system improvement recommendations. Request strategic guidance: *"Based on observed failover patterns, performance metrics, and operational events, provide specific recommendations for reducing Mean Time To Recovery, optimizing health probe configurations, implementing predictive scaling policies, and enhancing overall system resilience."*
+# Sustained endurance testing
+./scripts/load-test.sh 300 200 500
+# AI Query: "Analyze long-term performance trends and resource stability"
+```
 
-## AI-Powered Operational Capabilities
+**Load Pattern Variations:**
+```bash
+# Traffic spike simulation
+./scripts/load-test.sh 180 400 600
 
-The Kagent platform delivers sophisticated operational capabilities that extend traditional SRE practices through natural language interfaces and intelligent automation. **Cluster Analysis** functionality provides comprehensive service health assessments, deployment state evaluations, resource utilization analysis, and intelligent recommendations based on observed patterns and industry best practices.
+# Extended capacity testing
+./scripts/load-test.sh 600 250 400
+```
 
-**Scaling Operations** encompass automated Horizontal Pod Autoscaler creation with customized policies, continuous monitoring of scaling events with trend analysis, proactive capacity planning based on historical patterns, and integration with load testing frameworks for validation of scaling policies under controlled conditions.
+**AI Analysis Queries:**
+- *"What are our current performance bottlenecks and capacity limits?"*
+- *"How effective are our autoscaling policies under different load patterns?"*
+- *"Compare current performance against our SLA requirements and industry benchmarks."*
+- *"What's the optimal resource allocation for this workload pattern?"*
 
-**Failure Diagnosis** capabilities include analysis of pod restart patterns with root cause identification, health probe failure investigation with configuration recommendations, correlation of controller events with system-wide metrics and user impact assessment, and predictive failure analysis based on trend identification and anomaly detection.
+### **Phase 5: Advanced Monitoring and Alerting Optimization**
 
-**Strategic Advisory Services** provide health probe configuration optimization based on application characteristics and performance requirements, autoscaling policy recommendations tailored to workload patterns and resource constraints, service mesh integration guidance for enhanced observability and traffic management, and disaster recovery planning with automated failover validation and recovery time optimization.
+Focus on monitoring stack optimization, custom metrics creation, and alert threshold tuning based on observed operational patterns. This phase leverages AI analysis to improve observability and reduce alert fatigue.
 
-## SRE Principles Integration and Best Practices
+**Monitoring Analysis:**
+```bash
+# Review current monitoring configuration
+kubectl get servicemonitor -n monitoring
+kubectl describe prometheusrule -n monitoring
 
-The demonstration embodies core Site Reliability Engineering principles through practical implementation patterns that showcase production-ready operational methodologies. **Observability** enhancement occurs through AI-powered query interfaces that unify Prometheus metrics with log analysis, structured event correlation across multiple system components, and human-friendly summarization of complex system states and performance trends.
+# Analyze alert history
+kubectl logs -n monitoring prometheus-prom-stack-kube-prometheus-prometheus-0 | grep WARN
+```
 
-**Automation** capabilities reduce Mean Time To Recovery through autonomous traffic switching during outage scenarios, predictive scaling based on workload patterns and resource utilization trends, intelligent alert routing and escalation based on service impact assessment, and self-healing infrastructure with comprehensive audit trails and rollback capabilities.
+**AI Analysis Queries:**
+- *"Create custom alerts based on the failure patterns we've observed."*
+- *"What SLIs should we be monitoring for this application type?"*
+- *"Are our current alert thresholds causing alert fatigue or missing real issues?"*
+- *"Design a monitoring dashboard that would help during a 3 AM incident response."*
+- *"Recommend improvements to reduce false positive alerts while maintaining coverage."*
 
-**Reliability Engineering** practices include chaos engineering democratization through controlled failure injection with AI-powered analysis, comprehensive testing frameworks that validate system behavior under various failure conditions, capacity planning optimization through historical analysis and predictive modeling, and incident response automation with natural language interfaces for rapid diagnosis and resolution.
+### **Phase 6: Chaos Engineering and Combined Scenarios**
 
-**Knowledge Sharing** facilitation occurs through conversational AI interfaces that make specialized SRE expertise accessible to team members with varying experience levels, automated documentation generation based on operational events and system changes, and collaborative troubleshooting capabilities that preserve institutional knowledge and accelerate problem resolution.
+Execute sophisticated chaos engineering scenarios that combine load testing with failure injection to simulate realistic production incident conditions. This phase tests system resilience under complex multi-failure scenarios.
+
+**Cascading Failure Simulation:**
+```bash
+# Start sustained load
+./scripts/load-test.sh 300 200 500 &
+
+# Create cascading failure scenario
+sleep 60
+./scripts/simulate-failure.sh blue --outage 60
+sleep 30
+./scripts/simulate-failure.sh green --outage 30
+```
+
+**Stress Testing Under Failure:**
+```bash
+# High load with random failures
+./scripts/load-test.sh 600 400 700 &
+
+# Inject random failures during stress test
+for i in {1..5}; do
+  sleep 60
+  COLOR=$([ $((RANDOM % 2)) -eq 0 ] && echo "blue" || echo "green")
+  DURATION=$((RANDOM % 30 + 10))
+  ./scripts/simulate-failure.sh $COLOR --outage $DURATION
+done
+```
+
+**AI Analysis Queries:**
+- *"Analyze this cascading failure scenario and identify recovery patterns."*
+- *"What patterns emerge from repeated random failures under stress conditions?"*
+- *"How did user experience degrade during the compound failure scenario?"*
+- *"What's our current blast radius, and how can we reduce it?"*
+- *"Design circuit breaker policies based on observed failure patterns."*
+
+### **Phase 7: Incident Response and Root Cause Analysis**
+
+Conduct comprehensive incident analysis using AI-powered correlation of events, metrics, and logs to understand system behavior during failures. This phase emphasizes operational troubleshooting skills and documentation practices.
+
+**Timeline Reconstruction:**
+```bash
+# Gather comprehensive incident data
+kubectl get events -n sre-companion-demo --sort-by='.lastTimestamp'
+kubectl logs deployment/failover-controller -n sre-companion-demo --tail=100
+kubectl describe pods -n sre-companion-demo
+```
+
+**AI Analysis Queries:**
+- *"Reconstruct the timeline of the last major failure including user impact assessment."*
+- *"If this incident happened during peak business hours, what would be the business impact?"*
+- *"Draft a comprehensive incident report for the recent cascading failure scenario."*
+- *"What communication should go to different stakeholder groups during this type of incident?"*
+- *"Identify the root cause and contributing factors for each failure we've observed."*
+- *"Recommend specific preventive measures to avoid similar incidents."*
+
+### **Phase 8: Strategic Optimization and Capacity Planning**
+
+Synthesize insights from all previous phases to develop comprehensive optimization strategies and long-term capacity planning. This phase focuses on strategic improvements and architectural recommendations.
+
+**Performance Optimization Validation:**
+```bash
+# Test current configuration performance
+./scripts/load-test.sh 180 200 500
+# AI: "Document current performance metrics as optimization baseline"
+
+# After implementing AI recommendations, validate improvements
+# (This would involve applying HPA, resource limit changes, probe tuning, etc.)
+./scripts/load-test.sh 180 200 500
+# AI: "Compare performance before and after optimization implementations"
+
+# Test optimizations under failure conditions
+./scripts/load-test.sh 240 250 600 &
+./scripts/simulate-failure.sh blue --outage 45
+# AI: "Did our optimizations improve failover behavior and recovery times?"
+```
+
+**Strategic Planning Queries:**
+- *"Analyze our resource utilization patterns and suggest cost optimization opportunities."*
+- *"Project our infrastructure capacity needs for 3x traffic growth over the next year."*
+- *"Should we consider implementing a service mesh for better observability and traffic management?"*
+- *"Evaluate our current blue/green strategy versus alternatives like canary deployments or feature flags."*
+- *"Design a 6-month reliability engineering roadmap based on observed operational patterns."*
+- *"What automation could we implement to reduce operational toil and improve response times?"*
+
+## Demo Format Options
+
+### **Basic Demo (45-60 minutes)**
+Focus on core operational scenarios:
+- **Phase 1**: Initial Discovery (10 min)
+- **Phase 3**: Controlled Failure Testing (15 min)
+- **Phase 4**: Load Testing (15 min)
+- **Phase 6**: Simple Chaos Scenario (10 min)
+- **Phase 8**: Optimization Recommendations (5 min)
+
+### **Comprehensive Demo (90-120 minutes)**
+Complete operational assessment:
+- All 8 phases with full AI analysis
+- Multiple script scenarios per phase
+- Detailed discussion of recommendations
+- Interactive Q&A throughout
+
+### **Workshop Format (2-3 hours)**
+Hands-on learning experience:
+- **Part 1**: Individual script exploration (45 min)
+- **Part 2**: Guided scenario execution (60 min)
+- **Part 3**: Custom failure design exercise (45 min)
+- **Part 4**: Strategy discussion and planning (30 min)
+
+### **Self-Paced Learning**
+Choose-your-own-adventure format:
+- **SRE Track**: Focus on operations, monitoring, incident response
+- **Developer Track**: Focus on performance, debugging, optimization
+- **Manager Track**: Focus on business impact, cost analysis, strategic decisions
+
+## Scenario Variations and Advanced Exercises
+
+### **Randomized Failure Scenarios**
+Create dynamic challenges for repeated practice:
+- *"Your monitoring shows 99th percentile latency spiked to 30 seconds during the last load test..."*
+- *"A configuration change has caused memory leaks in the blue deployment..."*
+- *"Simulate a scenario where both blue and green deployments become unavailable..."*
+
+### **Role-Based Exercises**
+Tailor scenarios to specific operational roles:
+- **On-Call Engineer**: Focus on rapid diagnosis and recovery
+- **Platform Engineer**: Focus on infrastructure optimization and automation
+- **Site Reliability Engineer**: Focus on long-term reliability improvements
+- **Engineering Manager**: Focus on process improvements and team effectiveness
+
+### **Gamification Elements**
+Add competitive and achievement-based learning:
+- Score based on Mean Time To Recovery improvements
+- Achievements for discovering specific operational insights
+- Leaderboards for optimization suggestion implementation
+- Badges for mastering different operational scenarios
 
 ## System Validation and Health Verification
 
@@ -227,11 +438,23 @@ kubectl get events -n sre-companion-demo --sort-by='.lastTimestamp'
 
 ## Troubleshooting Common Operational Issues
 
-**API Key Configuration Problems** typically manifest as authentication errors in AI agent operations or model configuration failures. Verify that Anthropic or OpenAI secrets are properly configured in the `kagent` namespace using `kubectl get secrets -n kagent` and ensure API keys have sufficient permissions and quota for the expected operational load.
+### **AI Agent Limitations and Workarounds**
+
+**Metrics Access Issues** - If the agent reports inability to access Prometheus metrics, verify RBAC permissions for the kagent service account, MCP server configuration for Prometheus integration, and network connectivity between agent and monitoring services. Use Grafana dashboards as fallback for metrics visualization when AI correlation fails.
+
+**Tool Access Inconsistencies** - The agent may occasionally fail to retrieve specific resources. In such cases, retry queries with more specific parameters, use direct kubectl commands to verify resource existence, and check agent logs for underlying connectivity issues. The agent demonstrates realistic learning patterns by starting with incorrect assumptions and improving through iterative queries.
+
+**Expected Learning Patterns** - The agent may initially check the default namespace before discovering the correct `sre-companion-demo` namespace. This realistic discovery pattern mirrors actual operational troubleshooting workflows and provides educational value about systematic investigation approaches.
+
+### **Script Execution Issues**
 
 **Port Forwarding Connectivity Issues** can often be resolved through process cleanup and session restart without requiring complete system redeployment. Identify conflicting processes using `lsof` commands and terminate as necessary before re-establishing port forwarding sessions.
 
-**Metrics Collection and Dashboard Display Problems** may occur due to incomplete Prometheus configuration or missing service monitor definitions. The demonstration application intentionally lacks comprehensive instrumentation to simulate real-world gaps in observability, requiring operators to identify and address monitoring blind spots.
+**Load Test Script Failures** may result from insufficient cluster resources or competing workloads. Monitor resource utilization during tests and adjust concurrency parameters or cluster allocation accordingly.
+
+**Failure Simulation Script Issues** typically indicate RBAC permission problems or invalid deployment targets. Verify that the target deployments exist and that the script has appropriate permissions to scale deployments.
+
+### **Infrastructure and Resource Issues**
 
 **Resource Constraint and Pod Scheduling Issues** typically indicate insufficient Minikube resource allocation or competing workloads consuming available capacity. Address through cluster resource scaling or workload optimization based on actual resource utilization patterns observed through monitoring dashboards.
 
@@ -246,5 +469,7 @@ This demonstration deliberately incorporates real-world operational challenges a
 **Observability Gaps and Metrics Collection Limitations** occur through incomplete application instrumentation, resulting in empty Prometheus queries for certain metrics categories. This realistic scenario highlights the critical importance of comprehensive monitoring strategies, instrumentation planning, and observability-driven development practices in production environments.
 
 **Service Configuration Dependencies and Routing Complexities** may cause traffic routing to deployments with zero available pods, creating authentic outage scenarios that demonstrate the value of proper health checking, traffic management policies, and automated recovery mechanisms. **Resource Limit and Scaling Dependencies** can cause AI recommendations to fail when deployments lack proper resource specifications, illustrating the interconnected nature of Kubernetes resource management and autoscaling policies.
+
+**Script-Based Learning Opportunities** include scenarios where load tests may fail due to resource constraints, teaching proper capacity planning and resource management. Failure simulations may not trigger expected behaviors due to probe configurations, demonstrating the importance of proper health check design and testing.
 
 These intentional "failures" provide realistic scenarios for practicing troubleshooting methodologies, understanding distributed systems complexities, and appreciating the nuanced relationship between automated systems and human operational expertise. They demonstrate why AI augments rather than replaces human judgment in critical operational decisions and reinforce the importance of comprehensive system design, monitoring, and operational procedures in modern SRE practices.
