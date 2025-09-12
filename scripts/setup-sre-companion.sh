@@ -117,6 +117,96 @@ wait_for_deployment() {
     echo "[✓] $name is ready"
 }
 
+open_urls() {
+    echo "[+] Setting up access to all services..."
+    
+    # Start port forwarding in background
+    echo "[+] Starting port forwarding services..."
+    kubectl -n sre-companion-demo port-forward service/web 8082:80 >/dev/null 2>&1 &
+    kubectl -n kagent port-forward service/kagent-ui 8081:80 >/dev/null 2>&1 &
+    kubectl -n monitoring port-forward service/prom-stack-grafana 3000:80 >/dev/null 2>&1 &
+    kubectl -n monitoring port-forward svc/prom-stack-kube-prometheus-prometheus 9090:9090 >/dev/null 2>&1 &
+    
+    # Wait for port forwarding to establish
+    sleep 5
+    
+    # Get Grafana admin password
+    GRAFANA_PASSWORD=$(kubectl get secret prom-stack-grafana -n monitoring -o jsonpath="{.data.admin-password}" | base64 -d)
+    
+    echo "[+] Loading SRE demo dashboard into Grafana..."
+    # Wait a bit more for Grafana to be fully ready
+    sleep 10
+    
+    # Import the dashboard using Grafana API
+    if [[ -f "grafana/sre-demo-dashboard.json" ]]; then
+        # Create the API payload for dashboard import
+        DASHBOARD_JSON=$(cat grafana/sre-demo-dashboard.json)
+        IMPORT_PAYLOAD=$(echo '{}' | jq --argjson dashboard "$DASHBOARD_JSON" '.dashboard = $dashboard | .overwrite = true')
+        
+        # Import dashboard via API
+        curl -s -X POST \
+            -H "Content-Type: application/json" \
+            -u "admin:$GRAFANA_PASSWORD" \
+            -d "$IMPORT_PAYLOAD" \
+            "http://localhost:3000/api/dashboards/db" >/dev/null 2>&1 || \
+            echo "[!] Dashboard import failed - you can import manually later"
+        
+        echo "[+] SRE demo dashboard imported successfully"
+    else
+        echo "[!] Dashboard file not found - skipping automatic import"
+    fi
+    
+    echo ""
+    echo "========================================="
+    echo "✅ SRE Companion Demo Ready!"
+    echo "========================================="
+    echo ""
+    echo "OPENING SERVICES IN YOUR BROWSER..."
+    echo ""
+    
+    # Open URLs based on operating system
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS
+        open "http://localhost:8082" &
+        open "http://localhost:8081" &
+        open "http://localhost:3000/d/sre-companion-demo" &  # Direct link to dashboard
+        open "http://localhost:9090" &
+    elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        # Linux
+        xdg-open "http://localhost:8082" &
+        xdg-open "http://localhost:8081" &
+        xdg-open "http://localhost:3000/d/sre-companion-demo" &  # Direct link to dashboard
+        xdg-open "http://localhost:9090" &
+    elif [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+        # Windows
+        start "http://localhost:8082" &
+        start "http://localhost:8081" &
+        start "http://localhost:3000/d/sre-companion-demo" &  # Direct link to dashboard
+        start "http://localhost:9090" &
+    fi
+    
+    echo "SERVICES:"
+    echo "• Demo Application: http://localhost:8082"
+    echo "• Kagent AI Dashboard: http://localhost:8081" 
+    echo "• Grafana Monitoring: http://localhost:3000 (admin / ${GRAFANA_PASSWORD})"
+    echo "• SRE Demo Dashboard: http://localhost:3000/d/sre-companion-demo"
+    echo "• Prometheus: http://localhost:9090"
+    echo ""
+    echo "DEMO STATUS:"
+    echo "• Blue deployment: 2 replicas (active)"
+    echo "• Green deployment: 0 replicas (standby)"
+    echo "• Failover controller: monitoring and ready"
+    echo "• SRE dashboard: loaded and ready"
+    echo ""
+    echo "DEMO COMMANDS:"
+    echo "• Load test: ./scripts/load-test.sh"
+    echo "• Trigger failover: kubectl scale deployment web-blue --replicas=0 -n sre-companion-demo"
+    echo "• Monitor live: kubectl get pods -n sre-companion-demo -w"
+    echo ""
+    echo "Note: Port forwarding is running in background. Press Ctrl+C to stop services."
+    echo "========================================="
+}
+
 # Main installation
 main() {
     validate_prerequisites
@@ -179,6 +269,12 @@ main() {
     
     wait_for_deployment kagent-controller kagent 300
     
+    echo "[+] Creating kagent-anthropic secret for agents"
+    kubectl create secret generic kagent-anthropic -n kagent \
+    --from-literal=ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY}" || \
+    kubectl patch secret kagent-anthropic -n kagent \
+    --patch='{"data":{"ANTHROPIC_API_KEY":"'$(echo -n "${ANTHROPIC_API_KEY}" | base64)'"}}'
+    
     echo "[+] Applying kagent configurations"
     kubectl apply -f kagent/modelconfig.yaml
     kubectl apply -f kagent/mcpserver.yaml
@@ -198,21 +294,8 @@ main() {
     kubectl apply -f controllers/failover-controller.yaml
     wait_for_deployment failover-controller sre-companion-demo 120
 
-    echo ""
-    echo "========================================="
-    echo "✅ Installation completed successfully!"
-    echo "========================================="
-    echo ""
-    echo "NEXT STEPS:"
-    echo "1. Check all pods: kubectl get pods --all-namespaces"
-    echo "2. Get app URL: minikube service web -n sre-companion-demo --url"
-    echo "3. Open kagent dashboard: kubectl -n kagent port-forward service/kagent-ui 8080:80"
-    echo ""
-    echo "Blue deployment: 2 replicas (active)"
-    echo "Green deployment: 0 replicas (standby)"
-    echo ""
-    echo "To test failover: kubectl scale deployment web-blue --replicas=0 -n sre-companion-demo"
-    echo "To load test: ./scripts/load-test.sh"
+    # Launch services and open URLs
+    open_urls
 }
 
 main "$@"
