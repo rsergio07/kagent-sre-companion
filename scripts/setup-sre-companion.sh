@@ -10,13 +10,34 @@ validate_prerequisites() {
     command -v docker >/dev/null || { echo "ERROR: docker is required"; exit 1; }
 }
 
-validate_anthropic_key() {
+validate_api_keys() {
+    local missing_keys=()
+    
     if [[ -z "${ANTHROPIC_API_KEY:-}" ]]; then
-        echo "ERROR: ANTHROPIC_API_KEY environment variable is required"
-        echo "Please set it with: export ANTHROPIC_API_KEY='your-api-key-here'"
+        missing_keys+=("ANTHROPIC_API_KEY")
+    fi
+    
+    if [[ -z "${OPENAI_API_KEY:-}" ]]; then
+        missing_keys+=("OPENAI_API_KEY")
+    fi
+    
+    if [[ ${#missing_keys[@]} -gt 0 ]]; then
+        echo "ERROR: Missing required environment variables:"
+        for key in "${missing_keys[@]}"; do
+            case $key in
+                "ANTHROPIC_API_KEY")
+                    echo "  - $key: Get from https://console.anthropic.com/"
+                    ;;
+                "OPENAI_API_KEY")
+                    echo "  - $key: Get from https://platform.openai.com/"
+                    ;;
+            esac
+        done
+        echo "Please set them with: export KEY_NAME='your-api-key-here'"
         exit 1
     fi
-    echo "[+] Anthropic API key validated"
+    
+    echo "[+] All API keys validated (OpenAI, Anthropic)"
 }
 
 force_cleanup() {
@@ -188,7 +209,7 @@ open_urls() {
     echo "SERVICES:"
     echo "• Demo Application: http://localhost:8082"
     echo "• Kagent AI Dashboard: http://localhost:8081" 
-    echo "• Grafana Monitoring: http://localhost:3000 (admin / ${GRAFANA_PASSWORD})"
+    echo "• Grafana Monitoring: http://localhost:3000"
     echo "• SRE Demo Dashboard: http://localhost:3000/d/sre-companion-demo"
     echo "• Prometheus: http://localhost:9090"
     echo ""
@@ -197,11 +218,16 @@ open_urls() {
     echo "• Green deployment: 0 replicas (standby)"
     echo "• Failover controller: monitoring and ready"
     echo "• SRE dashboard: loaded and ready"
+    echo "• AI Providers: OpenAI, Anthropic (dual-provider setup)"
     echo ""
-    echo "DEMO COMMANDS:"
-    echo "• Load test: ./scripts/load-test.sh"
-    echo "• Trigger failover: kubectl scale deployment web-blue --replicas=0 -n sre-companion-demo"
-    echo "• Monitor live: kubectl get pods -n sre-companion-demo -w"
+    echo "VALIDATION COMMANDS:"
+    echo "• Check all namespaces: kubectl get ns"
+    echo "• Verify demo app pods: kubectl get pods -n sre-companion-demo -o wide"
+    echo "• Verify failover agent: kubectl get agent -n kagent"
+    echo "• Verify monitoring stack: kubectl get pods -n monitoring"
+    echo "• Check Grafana credentials: kubectl get secret prom-stack-grafana -n monitoring -o jsonpath='{.data.admin-password}' | base64 -d"
+    echo "• Verify services/endpoints: kubectl get svc -A"
+    echo "• Check all pods: kubectl get pods -A"
     echo ""
     echo "Note: Port forwarding is running in background. Press Ctrl+C to stop services."
     echo "========================================="
@@ -210,7 +236,7 @@ open_urls() {
 # Main installation
 main() {
     validate_prerequisites
-    validate_anthropic_key
+    validate_api_keys
     
     # Force cleanup any existing state
     force_cleanup
@@ -255,46 +281,63 @@ main() {
 
     echo "[+] Installing kagent CRDs"
     helm install kagent-crds oci://ghcr.io/kagent-dev/kagent/helm/kagent-crds \
-    --version 0.5.5 --namespace kagent --create-namespace --wait
-    
-    echo "[+] Installing KMCP CRDs"
-    helm install kmcp-crds oci://ghcr.io/kagent-dev/kmcp/helm/kmcp-crds \
-    --version 0.1.5 --namespace kmcp-system --create-namespace --wait
+    --version 0.6.3 --namespace kagent --create-namespace --wait
     
     echo "[+] Installing kagent core components"
     helm install kagent oci://ghcr.io/kagent-dev/kagent/helm/kagent \
-    --version 0.5.5 --namespace kagent \
+    --version 0.6.3 --namespace kagent \
     --set providers.anthropic.apiKey="${ANTHROPIC_API_KEY}" \
     --wait --timeout=10m
     
     wait_for_deployment kagent-controller kagent 300
+
+    echo "[+] Waiting for ModelConfig CRD to be available..."
+    for i in {1..30}; do
+        if kubectl get crd modelconfigs.kagent.dev >/dev/null 2>&1; then
+        echo "[+] ModelConfig CRD is available"
+        break
+        fi
+        echo "    Waiting for CRDs to be ready... ($i/30)"
+        sleep 2
+    done
+
+    if ! kubectl get crd modelconfigs.kagent.dev >/dev/null 2>&1; then
+        echo "ERROR: ModelConfig CRD not available after 60s"
+        exit 1
+    fi
     
-    echo "[+] Creating kagent-anthropic secret for agents"
+    echo "[+] Creating API key secrets for dual providers"
+
+    # Anthropic secret
     kubectl create secret generic kagent-anthropic -n kagent \
-    --from-literal=ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY}" || \
+        --from-literal=ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY}" || \
     kubectl patch secret kagent-anthropic -n kagent \
-    --patch='{"data":{"ANTHROPIC_API_KEY":"'$(echo -n "${ANTHROPIC_API_KEY}" | base64)'"}}'
+        --patch='{"data":{"ANTHROPIC_API_KEY":"'$(echo -n "${ANTHROPIC_API_KEY}" | base64)'"}}'
+
+    # OpenAI secret
+    kubectl create secret generic kagent-openai -n kagent \
+        --from-literal=OPENAI_API_KEY="${OPENAI_API_KEY}" || \
+    kubectl patch secret kagent-openai -n kagent \
+        --patch='{"data":{"OPENAI_API_KEY":"'$(echo -n "${OPENAI_API_KEY}" | base64)'"}}'
+
+    echo "[+] Dual provider secrets created successfully"
     
     echo "[+] Applying kagent configurations"
-    kubectl apply -f kagent/modelconfig.yaml
-    kubectl apply -f kagent/mcpserver.yaml
+    kubectl apply -f kagent/modelconfig-openai.yaml
+    kubectl apply -f kagent/modelconfig-anthropic.yaml
     kubectl apply -f kagent/memory.yaml
     kubectl apply -f kagent/agent.yaml
-    
-    # Handle session.yaml gracefully
+
     if [[ -f "kagent/session.yaml" ]] && kubectl get crd sessions.kagent.dev >/dev/null 2>&1; then
         kubectl apply -f kagent/session.yaml
     else
         echo "[!] Skipping session.yaml (CRD not available or file missing)"
     fi
-    
-    kubectl apply -f kagent/failover-agent-config.yaml
 
     echo "[+] Deploying autonomous failover controller"
     kubectl apply -f controllers/failover-controller.yaml
     wait_for_deployment failover-controller sre-companion-demo 120
 
-    # Launch services and open URLs
     open_urls
 }
 

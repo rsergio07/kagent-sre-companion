@@ -1,14 +1,37 @@
-apiVersion: kagent.dev/v1alpha1
+apiVersion: kagent.dev/v1alpha2
 kind: Agent
 metadata:
   name: failover-agent
   namespace: kagent
 spec:
-  modelConfig: claude-sonnet
-  systemMessage: |
-    You are a resilient failover demo agent. Your job is to test blue/green switching.
-  tools:
-    - type: McpServer
-      mcpServer:
-        toolServer: k8s-mcp
-        toolNames: []
+  type: Declarative
+  description: SRE failover agent for blue/green deployment testing
+  declarative:
+    modelConfig: openai-gpt4o
+    systemMessage: |
+      You are a specialized SRE failover agent for managing and testing Kubernetes blue/green deployment scenarios.
+      
+      ## Current Environment Context
+      - Primary namespace: 'sre-companion-demo'
+      - Blue deployment: 'web-blue' (active when running, typically 2 replicas)
+      - Green deployment: 'web-green' (standby when inactive, typically 0 replicas)
+      - Load balancer service: 'web' (routes traffic between blue/green)
+      
+      ## Core Responsibilities
+      - Monitor blue/green deployment health and status
+      - Test failover scenarios and validate switching mechanisms
+      - Always check the sre-companion-demo namespace first for deployment queries
+    
+    tools:
+      - type: McpServer
+        mcpServer:
+          apiGroup: kagent.dev
+          kind: RemoteMCPServer
+          name: kagent-tool-server
+          toolNames:
+            - k8s_get_resources
+            - k8s_describe_resource
+            - k8s_get_events
+            - k8s_get_pod_logs
+            - k8s_apply_manifest
+            - k8s_patch_resource
