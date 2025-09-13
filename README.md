@@ -1,8 +1,8 @@
-# SRE Companion Demo: AI-Powered Operations with Kagent
+# SRE Companion Demo: Dual-Provider AI-Powered Operations with Kagent
 
-This repository demonstrates how **Kagent** transforms traditional Site Reliability Engineering (SRE) practices through **AI-powered cluster operations**. Rather than showcasing perfect workflows, this demo deliberately exposes real-world challenges — incomplete metrics, rate limits, and service misconfigurations — transforming them into valuable learning opportunities for modern SRE practices.
+This repository demonstrates how **Kagent** transforms traditional Site Reliability Engineering (SRE) practices through **dual-provider AI-powered cluster operations**. Rather than showcasing perfect workflows, this demo deliberately exposes real-world challenges — incomplete metrics, rate limits, and service misconfigurations — transforming them into valuable learning opportunities for modern SRE practices.
 
-The demonstration encompasses intelligent blue/green deployment management, autonomous failover capabilities, conversational cluster operations with AI agents, and seamless integration of monitoring, load testing, and failure simulation into cohesive operational scenarios through **hands-on scripted exercises**.
+The demonstration encompasses intelligent blue/green deployment management, autonomous failover capabilities, conversational cluster operations with dual AI providers (OpenAI GPT-4o and Anthropic Claude Sonnet 4), and seamless integration of monitoring, load testing, and failure simulation into cohesive operational scenarios through **hands-on scripted exercises**.
 
 ## Repository Structure and Component Architecture
 
@@ -28,13 +28,20 @@ The **`failover-controller.yaml`** implements a sophisticated autonomous failove
 
 The embedded monitoring script continuously evaluates service endpoint availability and automatically switches traffic routing when outages are detected. The controller creates Kubernetes events for audit trails and integrates with the broader observability stack through structured logging. This component demonstrates how AI-augmented automation can reduce Mean Time To Recovery (MTTR) while maintaining human oversight capabilities.
 
-### AI Platform Integration (`kagent/`)
+### Dual-Provider AI Platform Integration (`kagent/`)
 
-The **`kagent/`** directory contains the complete configuration for AI-powered operational capabilities. The **`modelconfig.yaml`** establishes connections to large language models (Claude Sonnet 4 and OpenAI GPT-4), enabling natural language interfaces for complex operational queries and analysis.
+The **`kagent/`** directory contains the complete configuration for dual-provider AI-powered operational capabilities. The **`modelconfig-anthropic.yaml`** establishes connection to Claude Sonnet 4 for advanced reasoning and complex incident analysis, while **`modelconfig-openai.yaml`** configures GPT-4o for rapid operational responses and tool integration.
 
-The **`agent.yaml`** and **`failover-agent-config.yaml`** define specialized AI agents with domain-specific knowledge for SRE operations. These agents possess deep understanding of blue/green deployment patterns, failover scenarios, and Kubernetes operational best practices. The **`mcpserver.yaml`** configures Model Context Protocol servers that provide secure, controlled access to cluster resources for AI agents.
+The **`agent.yaml`** defines a specialized SRE agent with comprehensive knowledge of blue/green deployment patterns, failover scenarios, and Kubernetes operational best practices. The agent can seamlessly switch between AI providers through the Kagent UI, enabling comparative analysis of different AI reasoning approaches for identical operational scenarios.
 
-The **`memory.yaml`** and **`session.yaml`** files enable persistent context and conversation state management, allowing AI agents to maintain awareness of ongoing operations and historical decisions. The **`monitoring/values.yaml`** customizes Prometheus stack deployment with demo-specific configurations that enhance AI agent access to metrics and alerting data.
+The **`memory.yaml`** and **`session.yaml`** files enable persistent context and conversation state management, allowing AI agents to maintain awareness of ongoing operations and historical decisions across provider switches. The **`monitoring/values.yaml`** customizes Prometheus stack deployment with demo-specific configurations that enhance AI agent access to metrics and alerting data.
+
+#### Dual-Provider Architecture Benefits
+
+- **OpenAI GPT-4o**: Optimized for rapid operational responses, excellent tool integration, and fast incident triage
+- **Anthropic Claude Sonnet 4**: Advanced reasoning capabilities, complex root cause analysis, and strategic planning
+- **Comparative Analysis**: Direct comparison of AI reasoning approaches for identical SRE scenarios
+- **Provider Switching**: Real-time model switching through the Kagent UI without configuration changes
 
 ### Monitoring and Observability (`grafana/`)
 
@@ -65,7 +72,7 @@ The script supports both blue and green deployment targeting, configurable outag
 
 #### **Environment Management (`setup-sre-companion.sh` and `cleanup.sh`)**
 
-The **`setup-sre-companion.sh`** script provides comprehensive environment provisioning with robust error handling, prerequisite validation, and automated service configuration. The script manages Docker runtime selection, Minikube cluster provisioning, comprehensive component deployment, and automatic service access configuration.
+The **`setup-sre-companion.sh`** script provides comprehensive environment provisioning with robust error handling, prerequisite validation, and automated service configuration. The script manages Docker runtime selection, Minikube cluster provisioning, comprehensive component deployment, and automatic service access configuration with dual AI provider setup.
 
 The **`cleanup.sh`** script ensures complete environment removal including cluster destruction, context cleanup, and artifact removal, enabling reliable reset capabilities for repeated demonstrations and configuration testing.
 
@@ -79,10 +86,10 @@ The **`Dockerfile`** implements security and performance best practices for cont
 
 Successful deployment requires Docker, Kubernetes (kubectl), Helm, and Minikube installed with appropriate system resource allocation. The minimum recommended configuration includes 8 CPU cores, 16GB RAM, and 40GB disk space for complete functionality including AI model operations and comprehensive monitoring.
 
-Configure your Anthropic API key through environment variable export to enable AI-powered operational capabilities:
+Configure your dual AI provider API keys through environment variable export to enable AI-powered operational capabilities:
 
 ```bash
-# Configure AI model access
+# Configure dual AI provider access
 export ANTHROPIC_API_KEY="your-anthropic-key-here"
 export OPENAI_API_KEY="your-openai-key-here"
 
@@ -99,7 +106,7 @@ Execute the comprehensive setup script for full environment provisioning. The au
 ./scripts/setup-sre-companion.sh
 ```
 
-This process provisions the Flask demonstration application with blue/green configuration, complete monitoring stack including Prometheus and Grafana with custom dashboards, autonomous failover controller with comprehensive permissions and monitoring logic, and the Kagent AI platform with integrated agent capabilities and model configurations.
+This process provisions the Flask demonstration application with blue/green configuration, complete monitoring stack including Prometheus and Grafana with custom dashboards, autonomous failover controller with comprehensive permissions and monitoring logic, and the Kagent AI platform with dual-provider agent capabilities and model configurations.
 
 ### Service Access and Port Management
 
@@ -115,7 +122,7 @@ kubectl -n sre-companion-demo port-forward service/web 8082:80
 
 [➡ Open Application](http://localhost:8082)
 
-**Kagent AI dashboard (conversational operations)**
+**Kagent AI dashboard (dual-provider conversational operations)**
 
 ```bash
 kubectl -n kagent port-forward service/kagent-ui 8081:80
@@ -149,13 +156,38 @@ lsof -i :8082 -i :8081 -i :3000 -i :9090
 kill -9 <PID>
 ```
 
+## Dual-Provider AI Operational Framework
+
+The demonstration leverages both AI providers for complementary capabilities in SRE scenarios. The Kagent UI allows seamless switching between providers to compare reasoning approaches for identical operational challenges.
+
+### Comparative AI Analysis Examples
+
+**OpenAI GPT-4o Queries** (Fast operational responses and tool integration):
+- *"What is the current state of my blue/green deployment?"*
+- *"Scale the blue deployment to handle traffic spike"*
+- *"Show me recent pod restart events and resource utilization"*
+- *"Execute immediate failover to green deployment"*
+
+**Anthropic Claude Sonnet 4 Queries** (Deep analytical reasoning and strategic planning):
+- *"Analyze the root cause patterns from our recent cascade failure and recommend architectural improvements"*
+- *"Design a comprehensive incident response playbook based on observed failure modes"*
+- *"Evaluate our current SRE practices against industry reliability standards and suggest optimization strategies"*
+- *"Create a 6-month reliability engineering roadmap based on operational patterns we've observed"*
+
+### Provider Selection Strategy
+
+- **Incident Triage**: Use GPT-4o for rapid assessment and immediate response actions
+- **Root Cause Analysis**: Switch to Claude Sonnet 4 for comprehensive investigation and strategic recommendations  
+- **Performance Optimization**: Compare both providers' recommendations for capacity planning and architectural decisions
+- **Documentation**: Leverage Claude Sonnet 4 for detailed incident reports and process documentation
+
 ## Interactive Demonstration Framework
 
-The demonstration progresses through eight comprehensive phases that showcase increasing complexity in AI-augmented SRE practices. Each phase combines hands-on script execution with AI-powered analysis to create realistic operational scenarios.
+The demonstration progresses through eight comprehensive phases that showcase increasing complexity in dual-provider AI-augmented SRE practices. Each phase combines hands-on script execution with comparative AI analysis to create realistic operational scenarios.
 
 ### **Phase 1: Initial Discovery and Baseline Assessment**
 
-Begin the demonstration by establishing comprehensive cluster awareness through direct Kubernetes API interactions combined with AI-powered analysis. This phase establishes operational baselines and identifies system dependencies.
+Begin the demonstration by establishing comprehensive cluster awareness through direct Kubernetes API interactions combined with dual AI-powered analysis. This phase establishes operational baselines and identifies system dependencies.
 
 **Cluster State Discovery:**
 ```bash
@@ -170,11 +202,10 @@ kubectl describe service web -n sre-companion-demo
 ./scripts/load-test.sh 60 50 200
 ```
 
-**AI Analysis Queries:**
-- *"What is the current state of my blue/green deployment? Analyze pod health, service routing configuration, and resource allocation patterns."*
-- *"What are the resource requests and limits for each deployment, and are they appropriately sized for the workload?"*
-- *"Show me the service dependencies and network topology for this application."*
-- *"Analyze the baseline performance metrics and establish SLA benchmarks."*
+**Comparative AI Analysis Queries:**
+- *"What is the current state of my blue/green deployment? Analyze pod health, service routing configuration, and resource allocation patterns."* (Both providers)
+- *"What are the resource requests and limits for each deployment, and are they appropriately sized for the workload?"* (GPT-4o for quick assessment)
+- *"Analyze the baseline performance metrics and establish comprehensive SLA benchmarks with industry comparisons."* (Claude Sonnet 4 for detailed analysis)
 
 ### **Phase 2: Configuration Analysis and Security Assessment**
 
@@ -187,11 +218,10 @@ kubectl describe deployment web-green -n sre-companion-demo
 kubectl get events -n sre-companion-demo --sort-by='.lastTimestamp'
 ```
 
-**AI Analysis Queries:**
-- *"Analyze the security configuration of my deployments. Are there any vulnerabilities or misconfigurations?"*
-- *"Review the health probe settings - are they optimally configured for this application type?"*
-- *"What RBAC permissions are configured, and are they following least privilege principles?"*
-- *"Assess the resource limits and requests - do they align with expected workload patterns?"*
+**Comparative AI Analysis Queries:**
+- *"Analyze the security configuration of my deployments. Are there any vulnerabilities or misconfigurations?"* (Both providers for comparison)
+- *"Review the health probe settings - are they optimally configured for this application type?"* (GPT-4o for technical assessment)
+- *"Design a comprehensive security audit checklist based on current configuration analysis."* (Claude Sonnet 4 for strategic framework)
 
 ### **Phase 3: Controlled Failure Injection and Recovery Analysis**
 
@@ -218,11 +248,10 @@ kubectl get events -n sre-companion-demo --sort-by='.lastTimestamp' | tail -10
 ./scripts/simulate-failure.sh green --outage 15
 ```
 
-**AI Analysis Queries:**
-- *"Analyze the failover event timing and recovery process. What was the Mean Time To Recovery?"*
-- *"How did the autonomous failover controller respond to the blue deployment failure?"*
-- *"What would happen if we lost 50% of our cluster nodes during peak traffic?"*
-- *"Compare the recovery patterns between immediate failures and controlled outages."*
+**Comparative AI Analysis Queries:**
+- *"Analyze the failover event timing and recovery process. What was the Mean Time To Recovery?"* (GPT-4o for metrics analysis)
+- *"How did the autonomous failover controller respond to the blue deployment failure?"* (Both providers)
+- *"Design resilience improvement strategies based on observed failure patterns and industry best practices."* (Claude Sonnet 4 for strategic planning)
 
 ### **Phase 4: Progressive Load Testing and Performance Analysis**
 
@@ -232,39 +261,25 @@ Conduct comprehensive load testing using progressive traffic patterns to underst
 ```bash
 # Light load baseline
 ./scripts/load-test.sh 120 50 200
-# AI Query: "Establish our performance baseline during light load conditions"
+# AI Query (GPT-4o): "Establish our performance baseline during light load conditions"
 
 # Medium load testing
 ./scripts/load-test.sh 120 150 400  
-# AI Query: "How do response times and resource utilization change as load increases?"
+# AI Query (Both): "How do response times and resource utilization change as load increases?"
 
 # Heavy load stress testing
 ./scripts/load-test.sh 120 300 700
-# AI Query: "Identify performance degradation patterns and autoscaling triggers"
-
-# Sustained endurance testing
-./scripts/load-test.sh 300 200 500
-# AI Query: "Analyze long-term performance trends and resource stability"
+# AI Query (Claude): "Identify performance degradation patterns and recommend comprehensive scaling strategies"
 ```
 
-**Load Pattern Variations:**
-```bash
-# Traffic spike simulation
-./scripts/load-test.sh 180 400 600
-
-# Extended capacity testing
-./scripts/load-test.sh 600 250 400
-```
-
-**AI Analysis Queries:**
-- *"What are our current performance bottlenecks and capacity limits?"*
-- *"How effective are our autoscaling policies under different load patterns?"*
-- *"Compare current performance against our SLA requirements and industry benchmarks."*
-- *"What's the optimal resource allocation for this workload pattern?"*
+**Comparative AI Analysis Queries:**
+- *"What are our current performance bottlenecks and capacity limits?"* (GPT-4o for immediate assessment)
+- *"Compare current performance against our SLA requirements and industry benchmarks with detailed improvement recommendations."* (Claude Sonnet 4 for comprehensive analysis)
+- *"Design optimal resource allocation and autoscaling policies based on observed load patterns."* (Both providers for comparison)
 
 ### **Phase 5: Advanced Monitoring and Alerting Optimization**
 
-Focus on monitoring stack optimization, custom metrics creation, and alert threshold tuning based on observed operational patterns. This phase leverages AI analysis to improve observability and reduce alert fatigue.
+Focus on monitoring stack optimization, custom metrics creation, and alert threshold tuning based on observed operational patterns. This phase leverages dual AI analysis to improve observability and reduce alert fatigue.
 
 **Monitoring Analysis:**
 ```bash
@@ -276,12 +291,10 @@ kubectl describe prometheusrule -n monitoring
 kubectl logs -n monitoring prometheus-prom-stack-kube-prometheus-prometheus-0 | grep WARN
 ```
 
-**AI Analysis Queries:**
-- *"Create custom alerts based on the failure patterns we've observed."*
-- *"What SLIs should we be monitoring for this application type?"*
-- *"Are our current alert thresholds causing alert fatigue or missing real issues?"*
-- *"Design a monitoring dashboard that would help during a 3 AM incident response."*
-- *"Recommend improvements to reduce false positive alerts while maintaining coverage."*
+**Comparative AI Analysis Queries:**
+- *"Create custom alerts based on the failure patterns we've observed."* (GPT-4o for technical implementation)
+- *"Design a comprehensive monitoring strategy that aligns with SRE best practices and reduces alert fatigue."* (Claude Sonnet 4 for strategic framework)
+- *"Recommend specific SLIs and SLOs for this application based on observed operational patterns."* (Both providers for comparison)
 
 ### **Phase 6: Chaos Engineering and Combined Scenarios**
 
@@ -299,30 +312,14 @@ sleep 30
 ./scripts/simulate-failure.sh green --outage 30
 ```
 
-**Stress Testing Under Failure:**
-```bash
-# High load with random failures
-./scripts/load-test.sh 600 400 700 &
-
-# Inject random failures during stress test
-for i in {1..5}; do
-  sleep 60
-  COLOR=$([ $((RANDOM % 2)) -eq 0 ] && echo "blue" || echo "green")
-  DURATION=$((RANDOM % 30 + 10))
-  ./scripts/simulate-failure.sh $COLOR --outage $DURATION
-done
-```
-
-**AI Analysis Queries:**
-- *"Analyze this cascading failure scenario and identify recovery patterns."*
-- *"What patterns emerge from repeated random failures under stress conditions?"*
-- *"How did user experience degrade during the compound failure scenario?"*
-- *"What's our current blast radius, and how can we reduce it?"*
-- *"Design circuit breaker policies based on observed failure patterns."*
+**Comparative AI Analysis Queries:**
+- *"Analyze this cascading failure scenario and identify recovery patterns."* (GPT-4o for immediate analysis)
+- *"Design comprehensive chaos engineering strategies and failure injection frameworks based on observed system behavior."* (Claude Sonnet 4 for strategic planning)
+- *"What's our current blast radius, and how can we implement circuit breaker patterns to reduce it?"* (Both providers for comparison)
 
 ### **Phase 7: Incident Response and Root Cause Analysis**
 
-Conduct comprehensive incident analysis using AI-powered correlation of events, metrics, and logs to understand system behavior during failures. This phase emphasizes operational troubleshooting skills and documentation practices.
+Conduct comprehensive incident analysis using dual AI-powered correlation of events, metrics, and logs to understand system behavior during failures. This phase emphasizes operational troubleshooting skills and documentation practices.
 
 **Timeline Reconstruction:**
 ```bash
@@ -332,13 +329,10 @@ kubectl logs deployment/failover-controller -n sre-companion-demo --tail=100
 kubectl describe pods -n sre-companion-demo
 ```
 
-**AI Analysis Queries:**
-- *"Reconstruct the timeline of the last major failure including user impact assessment."*
-- *"If this incident happened during peak business hours, what would be the business impact?"*
-- *"Draft a comprehensive incident report for the recent cascading failure scenario."*
-- *"What communication should go to different stakeholder groups during this type of incident?"*
-- *"Identify the root cause and contributing factors for each failure we've observed."*
-- *"Recommend specific preventive measures to avoid similar incidents."*
+**Comparative AI Analysis Queries:**
+- *"Reconstruct the timeline of the last major failure including user impact assessment."* (GPT-4o for rapid timeline creation)
+- *"Draft a comprehensive incident report with root cause analysis, business impact assessment, and detailed prevention strategies."* (Claude Sonnet 4 for thorough documentation)
+- *"Design incident response procedures and communication templates for different stakeholder groups."* (Both providers for comparison)
 
 ### **Phase 8: Strategic Optimization and Capacity Planning**
 
@@ -350,11 +344,6 @@ Synthesize insights from all previous phases to develop comprehensive optimizati
 ./scripts/load-test.sh 180 200 500
 # AI: "Document current performance metrics as optimization baseline"
 
-# After implementing AI recommendations, validate improvements
-# (This would involve applying HPA, resource limit changes, probe tuning, etc.)
-./scripts/load-test.sh 180 200 500
-# AI: "Compare performance before and after optimization implementations"
-
 # Test optimizations under failure conditions
 ./scripts/load-test.sh 240 250 600 &
 ./scripts/simulate-failure.sh blue --outage 45
@@ -362,68 +351,44 @@ Synthesize insights from all previous phases to develop comprehensive optimizati
 ```
 
 **Strategic Planning Queries:**
-- *"Analyze our resource utilization patterns and suggest cost optimization opportunities."*
-- *"Project our infrastructure capacity needs for 3x traffic growth over the next year."*
-- *"Should we consider implementing a service mesh for better observability and traffic management?"*
-- *"Evaluate our current blue/green strategy versus alternatives like canary deployments or feature flags."*
-- *"Design a 6-month reliability engineering roadmap based on observed operational patterns."*
-- *"What automation could we implement to reduce operational toil and improve response times?"*
+- *"Analyze our resource utilization patterns and suggest cost optimization opportunities."* (GPT-4o for technical analysis)
+- *"Design a comprehensive 6-month reliability engineering roadmap based on observed operational patterns and industry best practices."* (Claude Sonnet 4 for strategic planning)
+- *"Project our infrastructure capacity needs for 3x traffic growth over the next year with detailed scaling strategies."* (Both providers for comparison)
 
 ## Demo Format Options
 
 ### **Basic Demo (45-60 minutes)**
-Focus on core operational scenarios:
-- **Phase 1**: Initial Discovery (10 min)
-- **Phase 3**: Controlled Failure Testing (15 min)
-- **Phase 4**: Load Testing (15 min)
-- **Phase 6**: Simple Chaos Scenario (10 min)
-- **Phase 8**: Optimization Recommendations (5 min)
+Focus on core dual-provider operational scenarios:
+- **Phase 1**: Initial Discovery with AI comparison (10 min)
+- **Phase 3**: Controlled Failure Testing with dual analysis (15 min)
+- **Phase 4**: Load Testing with provider switching (15 min)
+- **Phase 6**: Simple Chaos Scenario with comparative insights (10 min)
+- **Phase 8**: Optimization Recommendations comparison (5 min)
 
 ### **Comprehensive Demo (90-120 minutes)**
-Complete operational assessment:
-- All 8 phases with full AI analysis
-- Multiple script scenarios per phase
-- Detailed discussion of recommendations
-- Interactive Q&A throughout
+Complete dual-provider operational assessment:
+- All 8 phases with full comparative AI analysis
+- Multiple script scenarios per phase with provider switching
+- Detailed discussion of AI reasoning differences
+- Interactive Q&A with both AI providers
 
 ### **Workshop Format (2-3 hours)**
-Hands-on learning experience:
-- **Part 1**: Individual script exploration (45 min)
-- **Part 2**: Guided scenario execution (60 min)
-- **Part 3**: Custom failure design exercise (45 min)
-- **Part 4**: Strategy discussion and planning (30 min)
-
-### **Self-Paced Learning**
-Choose-your-own-adventure format:
-- **SRE Track**: Focus on operations, monitoring, incident response
-- **Developer Track**: Focus on performance, debugging, optimization
-- **Manager Track**: Focus on business impact, cost analysis, strategic decisions
-
-## Scenario Variations and Advanced Exercises
-
-### **Randomized Failure Scenarios**
-Create dynamic challenges for repeated practice:
-- *"Your monitoring shows 99th percentile latency spiked to 30 seconds during the last load test..."*
-- *"A configuration change has caused memory leaks in the blue deployment..."*
-- *"Simulate a scenario where both blue and green deployments become unavailable..."*
-
-### **Role-Based Exercises**
-Tailor scenarios to specific operational roles:
-- **On-Call Engineer**: Focus on rapid diagnosis and recovery
-- **Platform Engineer**: Focus on infrastructure optimization and automation
-- **Site Reliability Engineer**: Focus on long-term reliability improvements
-- **Engineering Manager**: Focus on process improvements and team effectiveness
-
-### **Gamification Elements**
-Add competitive and achievement-based learning:
-- Score based on Mean Time To Recovery improvements
-- Achievements for discovering specific operational insights
-- Leaderboards for optimization suggestion implementation
-- Badges for mastering different operational scenarios
+Hands-on dual-provider learning experience:
+- **Part 1**: Individual script exploration with AI guidance (45 min)
+- **Part 2**: Guided scenario execution with provider comparison (60 min)
+- **Part 3**: Custom failure design exercise with dual AI consultation (45 min)
+- **Part 4**: Strategic discussion and planning with both providers (30 min)
 
 ## System Validation and Health Verification
 
-Comprehensive system validation requires regular execution of diagnostic commands across all system components to ensure proper operation and integration. These validation procedures should be incorporated into regular operational routines and automated monitoring frameworks.
+Comprehensive system validation requires regular execution of diagnostic commands across all system components to ensure proper operation and dual AI provider integration. These validation procedures should be incorporated into regular operational routines and automated monitoring frameworks.
+
+**Dual AI Provider Verification:**
+```bash
+kubectl get modelconfigs -n kagent
+kubectl get agents -n kagent  
+kubectl describe agent failover-agent -n kagent
+```
 
 **Deployment and Pod Health Assessment:**
 ```bash
@@ -436,14 +401,6 @@ kubectl describe deployment web-green -n sre-companion-demo
 ```bash
 kubectl describe svc web -n sre-companion-demo
 kubectl get endpoints web -n sre-companion-demo
-kubectl get ingress -n sre-companion-demo
-```
-
-**Autoscaling Configuration and Status Monitoring:**
-```bash
-kubectl get hpa -n sre-companion-demo
-kubectl describe hpa web-blue-hpa -n sre-companion-demo
-kubectl describe hpa web-green-hpa -n sre-companion-demo
 ```
 
 **Failover Controller Operations and Event History:**
@@ -454,13 +411,13 @@ kubectl get events -n sre-companion-demo --sort-by='.lastTimestamp'
 
 ## Troubleshooting Common Operational Issues
 
-### **AI Agent Limitations and Workarounds**
+### **Dual AI Provider Issues and Workarounds**
 
-**Metrics Access Issues** - If the agent reports inability to access Prometheus metrics, verify RBAC permissions for the kagent service account, MCP server configuration for Prometheus integration, and network connectivity between agent and monitoring services. Use Grafana dashboards as fallback for metrics visualization when AI correlation fails.
+**Model Switching Failures** - If switching between providers fails in the Kagent UI, verify that both ModelConfig resources are properly applied, API keys are valid and have sufficient credits, and the kagent-controller is running without errors. Use `kubectl logs deployment/kagent-controller -n kagent` to identify provider connectivity issues.
 
-**Tool Access Inconsistencies** - The agent may occasionally fail to retrieve specific resources. In such cases, retry queries with more specific parameters, use direct kubectl commands to verify resource existence, and check agent logs for underlying connectivity issues. The agent demonstrates realistic learning patterns by starting with incorrect assumptions and improving through iterative queries.
+**Provider-Specific Response Differences** - The dual providers may give different recommendations for identical queries. This is expected behavior and demonstrates the value of comparative AI analysis. GPT-4o typically provides faster, more tool-focused responses, while Claude Sonnet 4 offers deeper analytical reasoning and strategic insights.
 
-**Expected Learning Patterns** - The agent may initially check the default namespace before discovering the correct `sre-companion-demo` namespace. This realistic discovery pattern mirrors actual operational troubleshooting workflows and provides educational value about systematic investigation approaches.
+**API Rate Limiting** - During intensive testing with frequent AI queries, you may encounter rate limits. Implement query pacing or alternate between providers to maintain operational continuity while staying within API limits.
 
 ### **Script Execution Issues**
 
@@ -478,14 +435,12 @@ kubectl get events -n sre-companion-demo --sort-by='.lastTimestamp'
 
 ## Intentional Limitations and Educational Opportunities
 
-This demonstration deliberately incorporates real-world operational challenges and limitations to provide authentic learning experiences and highlight the importance of human oversight in AI-augmented operations. These intentional constraints serve as valuable teaching moments for understanding the complexities of modern distributed systems management.
+This demonstration deliberately incorporates real-world operational challenges and limitations to provide authentic learning experiences and highlight the importance of human oversight in dual AI-augmented operations. These intentional constraints serve as valuable teaching moments for understanding the complexities of modern distributed systems management and AI reasoning diversity.
 
-**AI Model Integration Constraints** require exact model identifiers and version specifications for proper API integration, demonstrating the importance of infrastructure-as-code practices and version management in operational environments. **API Rate Limiting Challenges** show how external service dependencies can impact operational workflows, emphasizing the need for proper rate limiting strategies, fallback mechanisms, and service degradation planning.
+**Dual AI Provider Comparison Opportunities** showcase how different AI models approach identical operational challenges with varying reasoning patterns, response speeds, and recommendation depths. This realistic scenario demonstrates the value of comparative AI analysis in complex operational decision-making while highlighting the continued importance of human judgment in synthesizing diverse AI recommendations.
 
-**Observability Gaps and Metrics Collection Limitations** occur through incomplete application instrumentation, resulting in empty Prometheus queries for certain metrics categories. This realistic scenario highlights the critical importance of comprehensive monitoring strategies, instrumentation planning, and observability-driven development practices in production environments.
+**API Rate Limiting Challenges** show how external service dependencies can impact operational workflows, emphasizing the need for proper rate limiting strategies, fallback mechanisms, and service degradation planning in AI-augmented operations environments.
 
-**Service Configuration Dependencies and Routing Complexities** may cause traffic routing to deployments with zero available pods, creating authentic outage scenarios that demonstrate the value of proper health checking, traffic management policies, and automated recovery mechanisms. **Resource Limit and Scaling Dependencies** can cause AI recommendations to fail when deployments lack proper resource specifications, illustrating the interconnected nature of Kubernetes resource management and autoscaling policies.
+**Service Configuration Dependencies and Routing Complexities** may cause traffic routing to deployments with zero available pods, creating authentic outage scenarios that demonstrate the value of proper health checking, traffic management policies, and automated recovery mechanisms. These scenarios provide excellent opportunities for comparative AI analysis of incident response strategies.
 
-**Script-Based Learning Opportunities** include scenarios where load tests may fail due to resource constraints, teaching proper capacity planning and resource management. Failure simulations may not trigger expected behaviors due to probe configurations, demonstrating the importance of proper health check design and testing.
-
-These intentional "failures" provide realistic scenarios for practicing troubleshooting methodologies, understanding distributed systems complexities, and appreciating the nuanced relationship between automated systems and human operational expertise. They demonstrate why AI augments rather than replaces human judgment in critical operational decisions and reinforce the importance of comprehensive system design, monitoring, and operational procedures in modern SRE practices.
+These intentional challenges provide realistic scenarios for practicing dual AI consultation methodologies, understanding the complementary nature of different AI reasoning approaches, and appreciating the nuanced relationship between multiple AI providers and human operational expertise in critical SRE decision-making processes.
