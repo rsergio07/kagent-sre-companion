@@ -1,7 +1,7 @@
 apiVersion: kagent.dev/v1alpha2
 kind: Agent
 metadata:
-  name: failover-agent
+  name: sre-companion
   namespace: kagent
 spec:
   type: Declarative

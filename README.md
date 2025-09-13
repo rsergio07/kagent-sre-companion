@@ -387,7 +387,7 @@ Comprehensive system validation requires regular execution of diagnostic command
 ```bash
 kubectl get modelconfigs -n kagent
 kubectl get agents -n kagent  
-kubectl describe agent failover-agent -n kagent
+kubectl describe agent sre-companion -n kagent
 ```
 
 **Deployment and Pod Health Assessment:**

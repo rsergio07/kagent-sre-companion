@@ -4,4 +4,4 @@ metadata:
   name: failover-session
   namespace: kagent
 spec:
-  agent: failover-agent
+  agent: sre-companion
