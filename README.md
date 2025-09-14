@@ -4,6 +4,46 @@ This repository demonstrates how **Kagent** transforms traditional Site Reliabil
 
 The demonstration encompasses intelligent blue/green deployment management, autonomous failover capabilities, conversational cluster operations with dual AI providers (OpenAI GPT-4o and Anthropic Claude Sonnet 4), and seamless integration of monitoring, load testing, and failure simulation into cohesive operational scenarios through **hands-on scripted exercises**.
 
+---
+
+## Table of Contents
+
+1. [Repository Structure and Component Architecture](#repository-structure-and-component-architecture)
+   - [Application Layer (`app/`)](#application-layer-app)
+   - [Kubernetes Manifests (`k8s/`)](#kubernetes-manifests-k8s)
+   - [Autonomous Operations (`controllers/`)](#autonomous-operations-controllers)
+   - [Dual-Provider AI Platform Integration (`kagent/`)](#dual-provider-ai-platform-integration-kagent)
+   - [Monitoring and Observability (`grafana/`)](#monitoring-and-observability-grafana)
+   - [Interactive Operational Scripts (`scripts/`)](#interactive-operational-scripts-scripts)
+   - [Container Image (`Dockerfile`)](#container-image-dockerfile)
+2. [Quick Deployment and Configuration](#quick-deployment-and-configuration)
+   - [Prerequisites and Environment Setup](#prerequisites-and-environment-setup)
+   - [Complete System Deployment](#complete-system-deployment)
+   - [Service Access and Port Management](#service-access-and-port-management)
+3. [Prometheus Monitoring Queries](#prometheus-monitoring-queries)
+   - [Pod Resource Utilization Monitoring](#pod-resource-utilization-monitoring)
+   - [Blue/Green Deployment Health Tracking](#bluegreen-deployment-health-tracking)
+4. [Dual-Provider AI Operational Framework](#dual-provider-ai-operational-framework)
+   - [Comparative AI Analysis Examples](#comparative-ai-analysis-examples)
+   - [Provider Selection Strategy](#provider-selection-strategy)
+5. [Multi-Agent AI Operations Ecosystem](#multi-agent-ai-operations-ecosystem)
+   - [Comprehensive Agent Portfolio](#comprehensive-agent-portfolio)
+   - [Platform-Wide Dual-Provider Capabilities](#platform-wide-dual-provider-capabilities)
+   - [Cross-Domain Comparative Analysis Framework](#cross-domain-comparative-analysis-framework)
+   - [Collaborative Multi-Agent Workflows](#collaborative-multi-agent-workflows)
+6. [Interactive Demonstration Framework](#interactive-demonstration-framework)
+   - [Phase 1: Environment Validation and Baseline Assessment](#phase-1-environment-validation-and-baseline-assessment)
+   - [Phase 2: Load Testing and Performance Analysis](#phase-2-load-testing-and-performance-analysis)
+   - [Phase 3: Failure Simulation and Recovery Testing](#phase-3-failure-simulation-and-recovery-testing)
+   - [Phase 4: Cascading Failure and Complex Scenarios](#phase-4-cascading-failure-and-complex-scenarios)
+   - [Phase 5: Monitoring and Incident Analysis](#phase-5-monitoring-and-incident-analysis)
+   - [Multi-Agent Comparative Analysis Workflow](#multi-agent-comparative-analysis-workflow)
+   - [Collaborative Multi-Agent Scenarios](#collaborative-multi-agent-scenarios)
+7. [Getting Started](#getting-started)
+8. [What Makes This Special](#what-makes-this-special)
+
+---
+
 ## Repository Structure and Component Architecture
 
 The project follows a logical separation of concerns designed to showcase production-ready SRE practices while maintaining educational clarity. Each directory serves a specific purpose in the overall demonstration ecosystem.
@@ -53,7 +93,7 @@ This dashboard integrates seamlessly with AI agent queries, enabling natural lan
 
 The **`scripts/`** directory contains the core automation tools that make this demo interactive and realistic. These scripts serve as the primary interface for hands-on operational exercises and enable realistic testing scenarios that mirror production operational patterns.
 
-#### **Load Testing Framework (`load-test.sh`)**
+#### Load Testing Framework (`load-test.sh`)
 
 The **`load-test.sh`** script provides sophisticated load generation capabilities with configurable parameters for duration, concurrency, and CPU burn intensity. This script serves multiple purposes: populating monitoring dashboards with realistic operational data, triggering autoscaling policies for scaling behavior analysis, validating system performance under various load conditions, and creating baseline metrics for AI-powered analysis.
 
@@ -64,13 +104,13 @@ The script accepts three primary parameters enabling flexible testing scenarios:
 
 Advanced usage patterns include progressive load testing for capacity discovery, stress testing for breaking point identification, sustained load testing for endurance validation, and baseline testing for performance regression analysis.
 
-#### **Chaos Engineering Framework (`simulate-failure.sh`)**
+#### Chaos Engineering Framework (`simulate-failure.sh`)
 
 The **`simulate-failure.sh`** script implements controlled failure injection with two distinct operational modes. The **immediate failure mode** triggers rapid pod deletion to demonstrate Kubernetes self-healing capabilities and recovery time measurement. The **controlled outage mode** provides predictable failure scenarios with configurable duration and automatic recovery, enabling comprehensive failover testing and Mean Time To Recovery analysis.
 
 The script supports both blue and green deployment targeting, configurable outage duration for predictable testing scenarios, graceful recovery with replica restoration, and comprehensive logging for post-incident analysis. This enables realistic chaos engineering practices without requiring complex external tools or infrastructure modifications.
 
-#### **Environment Management (`setup-sre-companion.sh` and `cleanup.sh`)**
+#### Environment Management (`setup-sre-companion.sh` and `cleanup.sh`)
 
 The **`setup-sre-companion.sh`** script provides comprehensive environment provisioning with robust error handling, prerequisite validation, and automated service configuration. The script manages Docker runtime selection, Minikube cluster provisioning, comprehensive component deployment, and automatic service access configuration with dual AI provider setup.
 
@@ -79,6 +119,8 @@ The **`cleanup.sh`** script ensures complete environment removal including clust
 ### Container Image (`Dockerfile`)
 
 The **`Dockerfile`** implements security and performance best practices for containerized applications. The multi-stage approach uses Python 3.11 slim base images to minimize attack surface while maintaining compatibility. Environment variable configuration enables dynamic behavior modification without requiring image rebuilds, supporting the blue/green deployment pattern through runtime customization.
+
+---
 
 ## Quick Deployment and Configuration
 
@@ -112,7 +154,7 @@ This process provisions the Flask demonstration application with blue/green conf
 
 The deployment automatically configures port forwarding for all services and launches browser windows for immediate access. Manual port forwarding configuration enables flexible access patterns:
 
-### Access Points
+#### Access Points
 
 **Application interface (blue/green demonstration)**  
 
@@ -120,7 +162,7 @@ The deployment automatically configures port forwarding for all services and lau
 kubectl -n sre-companion-demo port-forward service/web 8082:80
 ```
 
-[➡ Open Application](http://localhost:8082)
+[Open Application](http://localhost:8082)
 
 **Kagent AI dashboard (dual-provider conversational operations)**
 
@@ -128,7 +170,7 @@ kubectl -n sre-companion-demo port-forward service/web 8082:80
 kubectl -n kagent port-forward service/kagent-ui 8081:80
 ```
 
-[➡ Open Kagent UI](http://localhost:8081)
+[Open Kagent UI](http://localhost:8081)
 
 **Grafana monitoring dashboard (metrics and visualization)**
 
@@ -136,7 +178,7 @@ kubectl -n kagent port-forward service/kagent-ui 8081:80
 kubectl -n monitoring port-forward service/prom-stack-grafana 3000:80
 ```
 
-[➡ Open Grafana](http://localhost:3000)
+[Open Grafana](http://localhost:3000)
 
 **Prometheus monitoring dashboard (raw metrics access)**
 
@@ -144,7 +186,7 @@ kubectl -n monitoring port-forward service/prom-stack-grafana 3000:80
 kubectl -n monitoring port-forward svc/prom-stack-kube-prometheus-prometheus 9090:9090
 ```
 
-[➡ Open Prometheus](http://localhost:9090)
+[Open Prometheus](http://localhost:9090)
 
 Port conflict resolution may require process termination when ports remain bound after session closure:
 
@@ -155,6 +197,42 @@ lsof -i :8082 -i :8081 -i :3000 -i :9090
 # Terminate specific processes (use with caution)
 kill -9 <PID>
 ```
+
+---
+
+## Prometheus Monitoring Queries
+
+### Pod Resource Utilization Monitoring
+
+Use these queries to explore the raw metrics data generated during your demonstration scenarios:
+
+```promql
+# CPU usage per pod in the demo namespace
+rate(container_cpu_usage_seconds_total{namespace="sre-companion-demo"}[5m])
+
+# Memory usage per pod
+container_memory_usage_bytes{namespace="sre-companion-demo"}
+
+# Pod restart count over time
+increase(kube_pod_container_status_restarts_total{namespace="sre-companion-demo"}[1h])
+```
+
+### Blue/Green Deployment Health Tracking
+
+Monitor deployment states and replica behavior during your failure simulation exercises:
+
+```promql
+# Replica count comparison
+kube_deployment_status_replicas{namespace="sre-companion-demo"}
+
+# Available vs desired replicas ratio
+kube_deployment_status_replicas_available{namespace="sre-companion-demo"} / kube_deployment_spec_replicas{namespace="sre-companion-demo"}
+
+# Pod readiness across versions
+kube_pod_status_ready{namespace="sre-companion-demo", condition="true"}
+```
+
+---
 
 ## Dual-Provider AI Operational Framework
 
@@ -181,9 +259,11 @@ The demonstration leverages both AI providers for complementary capabilities in 
 - **Performance Optimization**: Compare both providers' recommendations for capacity planning and architectural decisions
 - **Documentation**: Leverage Claude Sonnet 4 for detailed incident reports and process documentation
 
+---
+
 ## Multi-Agent AI Operations Ecosystem
 
-### **Comprehensive Agent Portfolio**
+### Comprehensive Agent Portfolio
 
 This demonstration deploys a **complete AI operations ecosystem** consisting of **11 specialized agents** that work collaboratively across different operational domains. Your custom **`sre-companion`** agent operates alongside **10 default Kagent agents** that provide comprehensive cloud-native operational coverage:
 
@@ -204,11 +284,11 @@ This demonstration deploys a **complete AI operations ecosystem** consisting of 
 - **`promql-agent`** - Natural language to PromQL query generation
 - **`sre-companion`** - Your custom blue/green deployment and SRE operations specialist
 
-### **Platform-Wide Dual-Provider Capabilities**
+### Platform-Wide Dual-Provider Capabilities
 
 The dual AI provider configuration (OpenAI GPT-4o and Anthropic Claude Sonnet 4) extends across **all 11 agents**, enabling comprehensive comparative analysis across every operational domain. This creates unprecedented opportunities for **cross-functional AI reasoning comparison**.
 
-## Cross-Domain Comparative Analysis Framework
+### Cross-Domain Comparative Analysis Framework
 
 | **Operational Domain** | **OpenAI GPT-4o Capabilities** | **Anthropic Claude Sonnet 4 Capabilities** |
 |---|---|---|
@@ -224,7 +304,7 @@ The dual AI provider configuration (OpenAI GPT-4o and Anthropic Claude Sonnet 4)
 | **Metrics Query Generation** (`promql-agent`) | • Rapid PromQL query generation • Immediate metrics troubleshooting • Fast dashboard query optimization • Quick alerting rule creation | • Comprehensive metrics strategy design • Advanced alerting query development • Strategic monitoring architecture planning • Observability query optimization frameworks |
 | **SRE Operations** (`sre-companion`) | • Fast failover execution • Immediate incident response • Quick blue/green deployment management • Rapid operational scenario handling | • Strategic reliability engineering planning • Comprehensive incident analysis • SRE maturity assessment • Long-term reliability architecture development |
 
-### **Collaborative Multi-Agent Workflows**
+### Collaborative Multi-Agent Workflows
 
 The platform enables sophisticated **collaborative scenarios** where multiple agents work together using different AI providers:
 
@@ -232,11 +312,13 @@ The platform enables sophisticated **collaborative scenarios** where multiple ag
 - **Network Troubleshooting**: Combine `cilium-debug-agent` (GPT-4o) for immediate fixes with `cilium-policy-agent` (Claude Sonnet 4) for strategic security improvements
 - **Deployment Optimization**: Leverage `argo-rollouts-conversion-agent` (GPT-4o) for quick conversions and `sre-companion` (Claude Sonnet 4) for reliability planning
 
+---
+
 ## Interactive Demonstration Framework
 
 The demonstration progresses through comprehensive phases that showcase dual-provider AI-augmented SRE practices. Each phase combines hands-on script execution with comparative AI analysis to create realistic operational scenarios.
 
-### **Phase 1: Environment Validation and Baseline Assessment**
+### Phase 1: Environment Validation and Baseline Assessment
 
 **Commands to Execute:**
 ```bash
@@ -252,7 +334,7 @@ kubectl get deployments,services -n sre-companion-demo
 - **Query 1** (Any agent): *"What is the current state of my blue/green deployment? Analyze pod health, service routing, and resource allocation."*
 - **Query 2** (Switch providers): *"Are the resource requests and limits appropriately sized for this workload? Provide optimization recommendations."*
 
-### **Phase 2: Load Testing and Performance Analysis**
+### Phase 2: Load Testing and Performance Analysis
 
 **Commands to Execute:**
 ```bash
@@ -270,7 +352,7 @@ kubectl get deployments,services -n sre-companion-demo
 - **Query 1** (GPT-4o): *"Analyze the performance metrics from our load tests. What are the current bottlenecks and capacity limits?"*
 - **Query 2** (Claude Sonnet 4): *"Compare our performance against SLA requirements and recommend comprehensive scaling strategies based on observed patterns."*
 
-### **Phase 3: Failure Simulation and Recovery Testing**
+### Phase 3: Failure Simulation and Recovery Testing
 
 **Commands to Execute:**
 ```bash
@@ -288,7 +370,7 @@ kubectl get events -n sre-companion-demo --sort-by='.lastTimestamp' | tail -10
 - **Query 1** (GPT-4o): *"Analyze the failover event timing and recovery process. What was the Mean Time To Recovery?"*
 - **Query 2** (Claude Sonnet 4): *"Design resilience improvement strategies based on the failure patterns we observed. Include industry best practices."*
 
-### **Phase 4: Cascading Failure and Complex Scenarios**
+### Phase 4: Cascading Failure and Complex Scenarios
 
 **Commands to Execute:**
 ```bash
@@ -308,7 +390,7 @@ sleep 30
 - **Query 1** (GPT-4o): *"Analyze this cascading failure scenario. How did the system handle multiple simultaneous failures?"*
 - **Query 2** (Claude Sonnet 4): *"Design comprehensive chaos engineering strategies based on this behavior. What's our blast radius and how can we implement circuit breakers?"*
 
-### **Phase 5: Monitoring and Incident Analysis**
+### Phase 5: Monitoring and Incident Analysis
 
 **Commands to Execute:**
 ```bash
@@ -326,7 +408,7 @@ kubectl describe pods -n sre-companion-demo
 - **Query 1** (GPT-4o): *"Reconstruct the timeline of our last major failure including user impact assessment and recovery actions taken."*
 - **Query 2** (Claude Sonnet 4): *"Draft a comprehensive incident report with root cause analysis and prevention strategies for future incidents."*
 
-### **Multi-Agent Comparative Analysis Workflow**
+### Multi-Agent Comparative Analysis Workflow
 
 **Cross-Domain Agent Testing:**
 
@@ -363,7 +445,7 @@ kubectl describe pods -n sre-companion-demo
 ```
 *"Design comprehensive monitoring strategy with SLI/SLO framework and alerting optimization."*
 
-### **Collaborative Multi-Agent Scenarios**
+### Collaborative Multi-Agent Scenarios
 
 **Incident Response Chain:**
 1. Query `k8s-agent` (GPT-4o) → *"Quick cluster health check and immediate response actions"*
@@ -386,6 +468,8 @@ Ready to explore dual-provider AI-powered SRE operations? Follow these steps:
 3. **Deploy**: Run `./scripts/setup-sre-companion.sh` for complete environment provisioning
 4. **Explore**: Access the Kagent UI at http://localhost:8081 and start querying your 11-agent ecosystem
 5. **Experiment**: Try the demonstration phases above, switching between AI providers to compare reasoning approaches
+
+---
 
 ## What Makes This Special
 
