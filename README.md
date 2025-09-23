@@ -19,8 +19,18 @@ Rather than showcasing perfect workflows, this demo deliberately exposes real-wo
 ```bash
 # Required: Set your AI provider API keys before deployment
 # Anthropic: https://console.anthropic.com/ | OpenAI: https://platform.openai.com/
-export ANTHROPIC_API_KEY="your-anthropic-key-here"
-export OPENAI_API_KEY="your-openai-key-here"
+
+# For Zsh
+echo "export ANTHROPIC_API_KEY='your-anthropic-key-here'" >> ~/.zshrc
+echo "export OPENAI_API_KEY='your-openai-key-here'" >> ~/.zshrc
+
+# For Bash
+echo "export ANTHROPIC_API_KEY='your-anthropic-key-here'" >> ~/.bashrc
+echo "export OPENAI_API_KEY='your-openai-key-here'" >> ~/.bashrc
+
+# Reload your shell so the changes take effect
+source ~/.zshrc   # if using zsh
+source ~/.bashrc  # if using bash
 ```
 
 ```bash
