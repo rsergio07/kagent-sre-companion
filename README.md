@@ -14,12 +14,29 @@ Rather than showcasing perfect workflows, this demo deliberately exposes real-wo
 - Minimum: 8 CPU cores, 16GB RAM, 40GB disk space
 - API Keys: `ANTHROPIC_API_KEY` and `OPENAI_API_KEY`
 
-### **One-Command Deployment**
+### **Complete Environment Deployment**
 
 ```bash
+# Required: Set your AI provider API keys before deployment
+# Anthropic: https://console.anthropic.com/ | OpenAI: https://platform.openai.com/
 export ANTHROPIC_API_KEY="your-anthropic-key-here"
 export OPENAI_API_KEY="your-openai-key-here"
+```
+
+```bash
+# Complete SRE Companion Demo environment deployment
 ./scripts/setup-sre-companion.sh
+
+# The script will perform comprehensive environment provisioning:
+# - Force cleanup of existing Minikube/Docker states
+# - Fresh Minikube cluster with adequate resources (6 CPU, 12GB RAM)
+# - Demo application build and image loading
+# - Core blue/green deployment infrastructure
+# - Prometheus monitoring stack with custom configurations
+# - Kagent platform with dual AI provider setup (OpenAI + Anthropic)
+# - 11 specialized AI agents for collaborative operations
+# - Autonomous failover controller deployment
+# - Automatic port forwarding and browser launching
 ```
 
 ### **Access Points**
@@ -29,9 +46,54 @@ export OPENAI_API_KEY="your-openai-key-here"
 - **Grafana Monitoring:** http://localhost:3000
 - **Prometheus:** http://localhost:9090
 
-### **Ready to Explore?**
+---
 
-**[Complete Demo Runbook](./Runbook.md)** - Follow guided exercises with hands-on scenarios
+## Pre-Demo Environment Preparation
+
+### Continuous Metrics Generation for Realistic Scenarios
+
+For presentation or training scenarios requiring rich operational history, use the continuous metrics generator to populate your environment with authentic SRE data patterns.
+
+#### When to Use This Script
+
+**Scenario:** You need realistic operational data for demonstrations, training sessions, or testing AI agent responses to complex scenarios.
+
+**Timing for Presentations:**
+- **4+ hour talks:** Start script 4-5 hours before presentation
+- **Live demos:** Start 2-3 hours before to have fresh events (Kubernetes events expire after ~1 hour)
+- **Training sessions:** Run overnight before multi-day workshops
+
+#### Script Usage
+
+```bash
+# Start continuous realistic load generation
+./scripts/continuous-metrics-generator.sh
+
+# The script will run 100 cycles of varied operational patterns:
+# - Light sustained load with scaling events
+# - Memory pressure spikes  
+# - Restart avalanches under load
+# - Rapid scaling with burst traffic
+# - Maximum chaos scenarios combining all patterns
+```
+
+#### Expected Outcomes
+
+After running this script, your environment will show:
+- **Rich Grafana dashboard data** with realistic resource usage patterns
+- **Failover controller logs** showing actual decision-making under pressure
+- **Pod restart and scaling events** demonstrating Kubernetes self-healing
+- **Correlated metrics** across memory, CPU, and availability dimensions
+- **Authentic operational complexity** for AI agent analysis
+
+#### Validation Commands
+
+```bash
+# Verify rich operational data is available
+kubectl logs deployment/failover-controller -n sre-companion-demo --tail=20
+kubectl get events --all-namespaces --sort-by='.lastTimestamp' | head -10
+kubectl top pods -n sre-companion-demo
+```
 
 ---
 
@@ -119,7 +181,7 @@ This demo deploys a **complete AI operations ecosystem** consisting of **11 spec
 - **Correlation Views:** Relationships between resource consumption and application performance
 - **AI Integration:** Natural language query support for complex metrics analysis
 
-### **Interactive Operational Scripts (`scripts/`)**
+**### Interactive Operational Scripts (`scripts/`)**
 
 **`setup-sre-companion.sh`** - Comprehensive environment provisioning with dual AI provider setup
 
@@ -127,6 +189,13 @@ This demo deploys a **complete AI operations ecosystem** consisting of **11 spec
 - **Minikube cluster provisioning** and image loading
 - **Complete stack deployment** (application, monitoring, AI platform)
 - **Automatic service configuration** and browser launching
+
+**`continuous-metrics-generator.sh`** - Sophisticated chaos engineering and load generation framework
+
+- **Automated load pattern generation:** 5 distinct operational scenarios in rotating cycles
+- **Realistic chaos engineering:** Memory pressure spikes, restart avalanches, scaling events
+- **Presentation preparation:** 4+ hour runtime populating dashboards with authentic operational data
+- **Comprehensive cleanup handling:** Graceful signal management and deployment state restoration
 
 **`load-test.sh`** - Sophisticated load generation framework
 
@@ -198,16 +267,6 @@ This demo deploys a **complete AI operations ecosystem** consisting of **11 spec
 - **Flask:** Lightweight web application framework
 - **Gunicorn:** Production WSGI server
 - **Python 3.11:** Runtime environment with security focus
-
----
-
-## **Getting Started**
-
-1. **Review Prerequisites:** Ensure Docker, Kubernetes, Helm, and Minikube are installed
-2. **Set API Keys:** Export your `ANTHROPIC_API_KEY` and `OPENAI_API_KEY`
-3. **Deploy Environment:** Run `./scripts/setup-sre-companion.sh`
-4. **Access Services:** Use the provided URLs to explore the deployed stack
-5. **Follow Exercises:** Use the **[Demo Runbook](./Runbook.md)** for guided scenarios
 
 ---
 
