@@ -14,8 +14,6 @@ Rather than showcasing perfect workflows, this demo deliberately exposes real-wo
 - Minimum: 8 CPU cores, 16GB RAM, 40GB disk space
 - API Keys: `ANTHROPIC_API_KEY` and `OPENAI_API_KEY`
 
-### **Complete Environment Deployment**
-
 ```bash
 # Required: Set your AI provider API keys before deployment
 # Anthropic: https://console.anthropic.com/ | OpenAI: https://platform.openai.com/
@@ -33,6 +31,8 @@ source ~/.zshrc   # if using zsh
 source ~/.bashrc  # if using bash
 ```
 
+### **Complete Environment Deployment**
+
 ```bash
 # Complete SRE Companion Demo environment deployment
 ./scripts/setup-sre-companion.sh
@@ -48,13 +48,6 @@ source ~/.bashrc  # if using bash
 # - Autonomous failover controller deployment
 # - Automatic port forwarding and browser launching
 ```
-
-### **Access Points**
-
-- **Demo Application:** http://localhost:8082
-- **Kagent AI Dashboard:** http://localhost:8081
-- **Grafana Monitoring:** http://localhost:3000
-- **Prometheus:** http://localhost:9090
 
 ---
 
