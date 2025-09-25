@@ -16,9 +16,11 @@ Rather than showcasing perfect workflows, this demo deliberately exposes real-wo
 
 ### **Complete Environment Deployment**
 
+Anthropic: https://console.anthropic.com/
+OpenAI: https://platform.openai.com/
+
 ```bash
 # Required: Set your AI provider API keys before deployment
-# Anthropic: https://console.anthropic.com/ | OpenAI: https://platform.openai.com/
 export ANTHROPIC_API_KEY="your-anthropic-key-here"
 export OPENAI_API_KEY="your-openai-key-here"
 ```
