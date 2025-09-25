@@ -305,19 +305,27 @@ curl -s http://localhost:8082/healthz || echo "SERVICE UNAVAILABLE"
 kill $LOAD_PID 2>/dev/null || true
 ```
 
-### Multi-Agent Question Sequence
+### Question Sequence for k8s-agent
 
-**k8s-agent with OpenAI GPT-4o:**
+**Configuration:** Use **OpenAI GPT-4o** (immediate cluster assessment)
+
 1. **"I have an incident! I started with load testing, then blue failed and traffic switched to green, but now green is also failing. What's the immediate cluster assessment?"**
+   - Expected: Rapid infrastructure status assessment during active incident
 
-**sre-companion with OpenAI GPT-4o:**
+**Switch to sre-companion:**
+
 2. **"During this cascade failure, both my blue and green deployments are down simultaneously. What immediate mitigation actions do you recommend when all deployment versions are unavailable?"**
+   - Expected: Immediate operational recovery actions
 
-**observability-agent with Anthropic Claude Sonnet 4:**
+**Switch to Anthropic Claude Sonnet 4 with observability-agent:**
+
 3. **"Analyze the patterns of this cascade incident where failover worked initially but then we lost both environments. What metrics and alerts should we have monitored to prevent complete service unavailability?"**
+   - Expected: Deep pattern analysis and monitoring strategy
 
-**k8s-agent with Anthropic Claude Sonnet 4:**
+**Continue with k8s-agent on Anthropic Claude Sonnet 4:**
+
 4. **"Design a comprehensive recovery and prevention plan to avoid this type of cascade failures where automatic failover saves us initially but we still experience total outage. Include both technical and operational safeguards."**
+   - Expected: Strategic framework for cascade prevention
 
 ### Post-Incident Verification
 ```bash

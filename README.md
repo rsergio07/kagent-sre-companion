@@ -25,6 +25,8 @@ export ANTHROPIC_API_KEY="your-anthropic-key-here"
 export OPENAI_API_KEY="your-openai-key-here"
 ```
 
+### **Complete Environment Deployment**
+
 ```bash
 # Complete SRE Companion Demo environment deployment
 ./scripts/setup-sre-companion.sh
@@ -40,13 +42,6 @@ export OPENAI_API_KEY="your-openai-key-here"
 # - Autonomous failover controller deployment
 # - Automatic port forwarding and browser launching
 ```
-
-### **Access Points**
-
-- **Demo Application:** http://localhost:8082
-- **Kagent AI Dashboard:** http://localhost:8081
-- **Grafana Monitoring:** http://localhost:3000
-- **Prometheus:** http://localhost:9090
 
 ---
 
